@@ -2,26 +2,14 @@ import pygame
 import math
 from random import choice
 
-FPS = 30
-W = 700
-H = 500
+W = 1024
+H = 720
+screen = pygame.display.set_mode((W, H))
+background = pygame.image.load("background.jpg")
 
+FPS = 60
 pygame.init()
-clock = pygame.time.Clock
-pic = pygame.display.set_mode((W, H))
-
-
-class Screen:
-    """Главный экран. Отвечает за отрисовку и генерирование мира"""
-
-    def __init__(self):
-        self.list_of_items = []
-
-    def move(self):
-        pass
-
-    def update(self):
-        pass
+clock = pygame.time.Clock()
 
 
 class Worm:
@@ -30,14 +18,14 @@ class Worm:
     new_segment() - Добавляет сегменты
     attack() - взаимодействие с врагом
     update() - отрисовка
-    list_of_segments - список элементов класса segment, сегментов червя"""
+    FIX list_of_segments - список элементов класса segment, сегментов червя"""
 
     def __init__(self):
         self.list_of_segments = [Segment(W / 2, H / 2)]  # Первый сегмент - голова
         for i in range(1, 11):
             segment_x = self.list_of_segments[i - 1].x - self.list_of_segments[i - 2].x
             segment_y = self.list_of_segments[i - 1].y - self.list_of_segments[i - 2].y
-            self.list_of_segments += Segment(segment_x, segment_y)
+            self.list_of_segments.append(Segment(segment_x, segment_y))
 
     def move(self, event):
         """вижение на WASD"""
@@ -80,7 +68,7 @@ class Worm:
         pass
 
 
-class Segment:
+class Segment(pygame.sprite.Sprite):
     """Класс сегмента, """
 
     def __init__(self, x, y):
@@ -89,6 +77,12 @@ class Segment:
         self.v = 10
         self.y = y
         self.x = x
+
+        super().__init__()
+        self.image = pygame.image.load("worm_temp.png")
+        self.image = pygame.transform.scale(self.image, (100, 100))
+        self.rect = self.image.get_rect()
+        self.rect.center = [x, y]
 
     def move_segment_up(self):
         self.y -= self.vy
@@ -103,8 +97,15 @@ class Segment:
         self.x += self.vx
 
 
-class Enemy:
-    def __init__(self):
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.x = x
+        self.y = y
+        self.image = pygame.image.load("bug.png")
+        self.image = pygame.transform.scale(self.image, (100, 100))
+        self.rect = self.image.get_rect()
+        self.rect.center = [x, y]
         self.type = choice(['Bug', 'Ant', 'Bird'])
 
     def move(self):
@@ -117,27 +118,68 @@ class Enemy:
         pass
 
 
-class Item:
+class Item(pygame.sprite.Sprite):
     def __init__(self, x, y):
+        super().__init__()
         self.x = x
         self.y = y
+        self.image = pygame.image.load("berry.png")
+        self.image = pygame.transform.scale(self.image, (100, 100))
+        self.rect = self.image.get_rect()
+        self.rect.center = [x, y]
         self.type = choice(["Seed", "Corpse", "Berry"])
 
+    # update the item, will change later
+    def update(self):
+        self.rect.center = pygame.mouse.get_pos()
 
-screen = Screen()
+
 worm = Worm()
+
+# new list of segments
+test_segment = Segment(100, 100)
+list_of_segments = pygame.sprite.Group()
+list_of_segments.add(test_segment)
+
+# list of items and the
+test_item = Item(500, 500)
+list_of_items = pygame.sprite.Group()
+list_of_items.add(test_item)
+
+# list of enemies
+test_enemy = Enemy(500, 300)
+list_of_enemies = pygame.sprite.Group()
+list_of_enemies.add(test_enemy)
 
 
 def game():
     game_over = False  # Закончена ли игра
+
+    # testing moving background
+    x = 0
     while not game_over:
-        # clock.tick(FPS)
+        clock.tick(FPS)
+
+        # Draw all the objects, update
+        pygame.display.flip()
+
+        # Moving background
+        rel_x = x % background.get_rect().width
+        screen.blit(background, (rel_x - background.get_rect().width, 0))
+        if rel_x < W:
+            screen.blit(background, (rel_x, 0))
+        x -= 2
+
+        list_of_enemies.draw(screen)
+        list_of_segments.draw(screen)
+        list_of_items.draw(screen)
+        list_of_items.update()
+
         for event in pygame.event.get():
-            if event == pygame.QUIT:
+            if event.type == pygame.QUIT:
                 game_over = True
-            if event == pygame.KEYDOWN:
+            if event.type == pygame.KEYDOWN:
                 worm.move(event)
-            screen.update()
 
 
 game()
