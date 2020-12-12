@@ -38,8 +38,11 @@ class Worm:
 
         if dir_angle - self.angle > 0:
             self.angle += 0.2
-        else:
+        elif dir_angle - self.angle < 0:
             self.angle -= 0.2
+
+        if event.pos[0] - head.x < 0:
+            self.angle += math.pi
 
         head.vx = head.v*math.cos(self.angle)
         head.vy = head.v*math.sin(self.angle)
