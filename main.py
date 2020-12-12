@@ -69,16 +69,25 @@ class Worm:
         pass
 
     def update(self):
-        pass
+        # Moving background
+        rel_x = W - self.head.x % background.get_rect().width
+        rel_y = H - self.head.y % background.get_rect().height
+        screen.blit(background, (rel_x - background.get_rect().width, rel_y - background.get_rect().height))
+        if rel_x < W:
+            screen.blit(background, (rel_x, rel_y - background.get_rect().height))
+        if rel_y < H:
+            screen.blit(background, (rel_x - background.get_rect().width, rel_y))
+        if rel_x < W and rel_y < H:
+            screen.blit(background, (rel_x, rel_y))
 
 
 class Segment(pygame.sprite.Sprite):
     """Класс сегмента, """
 
     def __init__(self, color, x, y):
-        self.vx = 5
+        self.vx = 3
         self.vy = 0
-        self.v = 5
+        self.v = 3
         self.y = y
         self.x = x
 
@@ -99,17 +108,6 @@ class Segment(pygame.sprite.Sprite):
         self.y += self.vy
 
     def update(self):
-        # Moving background
-        rel_x = self.x % background.get_rect().width
-        rel_y = self.y % background.get_rect().height
-        screen.blit(background, (rel_x - background.get_rect().width, rel_y - background.get_rect().height))
-        if rel_x < W:
-            screen.blit(background, (rel_x, rel_y - background.get_rect().height))
-        if rel_y < H:
-            screen.blit(background, (rel_x - background.get_rect().width, rel_y))
-        if rel_x < W and rel_y < H:
-            screen.blit(background, (rel_x, rel_y))
-
         self.rect.center = [self.x, self.y]
 
 
@@ -196,6 +194,7 @@ def game():
         pygame.display.flip()
 
         # group_of_enemies.draw(screen)
+        worm.update()
         group_of_segments.update()
         group_of_segments.draw(screen)
         # list_of_items.draw(screen)
