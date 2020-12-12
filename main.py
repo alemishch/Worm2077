@@ -20,7 +20,7 @@ class Worm:
     new_segment() - Добавляет сегменты
     attack() - взаимодействие с врагом
     update() - отрисовка
-    FIX list_of_segments - список элементов класса segment, сегментов червя"""
+    list_of_segments - список элементов класса segment, сегментов червя"""
 
     def __init__(self, group, list_s):
         self.list_of_segments = list_s
@@ -101,6 +101,17 @@ class Segment(pygame.sprite.Sprite):
         self.y += self.vy
 
     def update(self):
+        # Moving background
+        rel_x = self.x % background.get_rect().width
+        rel_y = self.y % background.get_rect().height
+        screen.blit(background, (rel_x - background.get_rect().width, rel_y - background.get_rect().height))
+        if rel_x < W:
+            screen.blit(background, (rel_x, rel_y - background.get_rect().height))
+        if rel_y < H:
+            screen.blit(background, (rel_x - background.get_rect().width, rel_y))
+        if rel_x < W and rel_y < H:
+            screen.blit(background, (rel_x, rel_y))
+
         self.rect.center = [self.x, self.y]
 
 
@@ -180,20 +191,11 @@ worm = Worm(group_of_segments, list_of_segments)
 def game():
     game_over = False  # Закончена ли игра
 
-    # testing moving background
-    x = 0
     while not game_over:
         clock.tick(FPS)
 
         # Draw all the objects, update
         pygame.display.flip()
-
-        # Moving background
-        rel_x = x % background.get_rect().width
-        screen.blit(background, (rel_x - background.get_rect().width, 0))
-        if rel_x < W:
-            screen.blit(background, (rel_x, 0))
-        x -= 2
 
         # group_of_enemies.draw(screen)
         group_of_segments.update()
