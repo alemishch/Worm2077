@@ -28,11 +28,11 @@ class Worm:
         self.angular_velocity = 1/10
         self.angle = 0
 
-    def move(self, event):
+    def move(self, x, y):
         """вижение на WASD"""
         head = self.list_of_segments[0]
         self.angle = math.atan(head.vy/head.vx)
-        final_angle = math.atan((event.pos[1]-head.y)/(event.pos[0]-head.x))
+        final_angle = math.atan((y-head.y)/(y-head.x))
         self.angle += (final_angle-self.angle)*self.angular_velocity  # FIXME нужна нормальная формула для поворота
         print(self.angle, final_angle)
         head.vx = head.v*math.cos(self.angle)
@@ -184,7 +184,7 @@ def game():
                 game_over = True
 
         if pygame.mouse.get_pressed()[0]:
-            worm.move(event)
+            worm.move(pygame.mouse.get_pos[0], pygame.mouse.get_pos[1])
 
 
 game()
