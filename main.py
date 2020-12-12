@@ -29,7 +29,7 @@ class Worm:
         self.angle = 0
 
     def move(self, x, y):
-        """вижение на WASD"""
+        """вижение на положение мыши"""
         self.angle = math.atan(self.head.vy/self.head.vx)
         dir_angle = math.atan((y-self.head.y)/(x-self.head.x))
 
@@ -54,6 +54,9 @@ class Worm:
             delta_y = previous.y - segment.y  # Разность у
             delta_x = previous.x - segment.x  # Разность х
             distance = math.sqrt(delta_x ** 2 + delta_y ** 2)  # Расстояние между сегментом и предыдущим
+            future_distance = math.sqrt((previous.y + previous.vy - segment.y) ** 2 +
+                                        (previous.x + previous.vx - segment.x) ** 2)
+            segment.v = future_distance - distance
             segment.vx = segment.v * delta_x / distance  # Новая скорость
             segment.vy = segment.v * delta_y / distance  # Новая скорость
 
