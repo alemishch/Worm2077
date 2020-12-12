@@ -70,8 +70,8 @@ class Worm:
 
     def update(self):
         # Moving background
-        rel_x = W - self.head.x % background.get_rect().width
-        rel_y = H - self.head.y % background.get_rect().height
+        rel_x = W - self.head.x_lab % background.get_rect().width
+        rel_y = H - self.head.y_lab % background.get_rect().height
         screen.blit(background, (rel_x - background.get_rect().width, rel_y - background.get_rect().height))
         if rel_x < W:
             screen.blit(background, (rel_x, rel_y - background.get_rect().height))
@@ -79,6 +79,9 @@ class Worm:
             screen.blit(background, (rel_x - background.get_rect().width, rel_y))
         if rel_x < W and rel_y < H:
             screen.blit(background, (rel_x, rel_y))
+
+        # Moving worm
+        group_of_segments.update()
 
 
 class Segment(pygame.sprite.Sprite):
@@ -88,8 +91,10 @@ class Segment(pygame.sprite.Sprite):
         self.vx = 3
         self.vy = 0
         self.v = 3
-        self.y = y
+        self.y = y  # screen coordinates
         self.x = x
+        self.x_lab = x  # laboratory coordinates
+        self.y_lab = y
 
         if color == "rand":
             color1 = randint(0, 255)
@@ -104,8 +109,12 @@ class Segment(pygame.sprite.Sprite):
         self.rect.center = [x, y]
 
     def move(self):
-        self.x += self.vx
-        self.y += self.vy
+        # changing screen coordinates
+        self.x += self.vx - list_of_segments[0].vx
+        self.y += self.vy - list_of_segments[0].vy
+        # changing laboratory coordinates
+        self.x_lab += self.vx
+        self.y_lab += self.vy
 
     def update(self):
         self.rect.center = [self.x, self.y]
@@ -195,7 +204,6 @@ def game():
 
         # group_of_enemies.draw(screen)
         worm.update()
-        group_of_segments.update()
         group_of_segments.draw(screen)
         # list_of_items.draw(screen)
         # list_of_items.update()
