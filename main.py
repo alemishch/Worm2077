@@ -1,6 +1,6 @@
 import pygame
 import math
-from random import choice
+from random import choice, randint
 
 W = 1024
 H = 720
@@ -9,6 +9,7 @@ background = pygame.image.load("background.jpg")
 
 FPS = 60
 BLACK = (0, 0, 0)
+RED = (255, 0, 0)
 pygame.init()
 clock = pygame.time.Clock()
 
@@ -24,28 +25,26 @@ class Worm:
     def __init__(self, group, list_s):
         self.list_of_segments = list_s
         self.group = group
+        self.angular_velocity = 2/40
+        self.angle = 0
 
     def move(self, event):
         """вижение на WASD"""
+        head = self.list_of_segments[0]
+        self.angle = math.atan(head.vy/head.vx)
+        final_angle = math.atan((event.pos[0]-head.x)/(event.pos[1]-head.y))
+        self.angle += (final_angle-self.angle)*self.angular_velocity  # FIXME нужна нормальная формула для поворота
+        print(self.angle, final_angle)
+        head.vx = head.v*math.cos(self.angle)
+        head.vy = head.v*math.sin(self.angle)
         self.set_speed()
-        if event.key == pygame.K_w:
-            for segment in self.list_of_segments:
-                segment.move_segment_up()
-        elif event.key == pygame.K_s:
-            for segment in self.list_of_segments:
-                segment.move_segment_down()
-        elif event.key == pygame.K_d:
-            for segment in self.list_of_segments:
-                segment.move_segment_right()
-        elif event.type == pygame.K_a:
-            for segment in self.list_of_segments:
-                segment.move_segment_left()
-        # print(self.list_of_segments[0].x, self.list_of_segments[0].y)
+        for segment in self.list_of_segments:
+            segment.move()
 
     def set_speed(self):
-        for i in range(0, len(self.list_of_segments)):
-            previous = self.list_of_segments[i - 1]  # Предыдущий сегмент
-            segment = self.list_of_segments[i]  # Текущий сегмент, скорость которого мы выставляем
+        for count in range(1, len(self.list_of_segments)):
+            previous = self.list_of_segments[count - 1]  # Предыдущий сегмент
+            segment = self.list_of_segments[count]  # Текущий сегмент, скорость которого мы выставляем
             delta_y = previous.y - segment.y  # Разность у
             delta_x = previous.x - segment.x  # Разность х
             distance = math.sqrt(delta_x ** 2 + delta_y ** 2)  # Расстояние между сегментом и предыдущим
@@ -58,7 +57,7 @@ class Worm:
         before_previous_segment = self.list_of_segments[len(self.list_of_segments) - 2]
         x = 2*previous_segment.x - before_previous_segment.x
         y = 2*previous_segment.y - before_previous_segment.y
-        self.list_of_segments += Segment(x, y)
+        self.list_of_segments += Segment("rand", x, y)
 
     def attack(self):
         pass
@@ -70,33 +69,28 @@ class Worm:
 class Segment(pygame.sprite.Sprite):
     """Класс сегмента, """
 
-    def __init__(self, x, y):
+    def __init__(self, color, x, y):
         self.vx = 5
-        self.vy = 5
-        self.v = 10
+        self.vy = 0
+        self.v = 5
         self.y = y
         self.x = x
 
+        if color == "rand":
+            color1 = randint(0, 255)
+            color2 = randint(0, 255)
+            color3 = randint(0, 255)
+            color = (color1, color2, color3)
+
         super().__init__()
         self.image = pygame.Surface([20, 20])
-        pygame.draw.circle(self.image, (255, 255, 255), (10, 10), 10, )
+        pygame.draw.circle(self.image, color, (10, 10), 10, )
         self.rect = self.image.get_rect()
         self.rect.center = [x, y]
 
-    def move_segment_up(self):
-        self.y -= self.vy
-        self.rect.center = [self.x, self.y]
-
-    def move_segment_down(self):
-        self.y += self.vy
-        self.rect.center = [self.x, self.y]
-
-    def move_segment_left(self):
-        self.x -= self.vx
-        self.rect.center = [self.x, self.y]
-
-    def move_segment_right(self):
+    def move(self):
         self.x += self.vx
+        self.y += self.vy
         self.rect.center = [self.x, self.y]
 
 
@@ -139,12 +133,13 @@ class Item(pygame.sprite.Sprite):
 
 # new list of segments
 group_of_segments = pygame.sprite.Group()
-list_of_segments = [Segment(W / 2, H / 2), Segment(W / 2 - 5, H / 2 - 5)]  # Первый сегмент - голова
+list_of_segments = [Segment(RED, W / 2, H / 2), Segment('rand', W / 2 - 5, H / 2 - 5)]  # Первый сегмент - голова,
+ # и второй
 group_of_segments.add(list_of_segments[0], list_of_segments[1])
 for i in range(2, 11):
     segment_x = 2*list_of_segments[i - 1].x - list_of_segments[i - 2].x
     segment_y = 2*list_of_segments[i - 1].y - list_of_segments[i - 2].y
-    list_of_segments.append(Segment(segment_x, segment_y))
+    list_of_segments.append(Segment('rand', segment_x, segment_y))
     group_of_segments.add(list_of_segments[i])
 # test_segment = Segment(100, 100)
 # list_of_segments.add(test_segment)
@@ -189,7 +184,7 @@ def game():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 game_over = True
-            if event.type == pygame.KEYDOWN:
+            if pygame.mouse.get_pressed()[0]:
                 worm.move(event)
 
 
