@@ -20,12 +20,8 @@ class Worm:
     update() - отрисовка
     FIX list_of_segments - список элементов класса segment, сегментов червя"""
 
-    def __init__(self):
-        self.list_of_segments = [Segment(W / 2, H / 2)]  # Первый сегмент - голова
-        for i in range(1, 11):
-            segment_x = self.list_of_segments[i - 1].x - self.list_of_segments[i - 2].x
-            segment_y = self.list_of_segments[i - 1].y - self.list_of_segments[i - 2].y
-            self.list_of_segments.append(Segment(segment_x, segment_y))
+    def __init__(self, list):
+        self.list_of_segments = list
 
     def move(self, event):
         """вижение на WASD"""
@@ -45,11 +41,11 @@ class Worm:
 
     def set_speed(self):
         for i in range(0, len(self.list_of_segments)):
-            previous = self.list_of_segments[i-1]  # Предыдущий сегмент
+            previous = self.list_of_segments[i - 1]  # Предыдущий сегмент
             segment = self.list_of_segments[i]  # Текущий сегмент, скорость которого мы выставляем
             delta_y = previous.y - segment.y  # Разность у
             delta_x = previous.x - segment.x  # Разность х
-            distance = math.sqrt(delta_x**2 + delta_y**2)  # Расстояние между сегментом и предыдущим
+            distance = math.sqrt(delta_x ** 2 + delta_y ** 2)  # Расстояние между сегментом и предыдущим
             segment.vx = segment.v * delta_x / distance  # Новая скорость
             segment.vy = segment.v * delta_y / distance  # Новая скорость
 
@@ -86,6 +82,7 @@ class Segment(pygame.sprite.Sprite):
 
     def move_segment_up(self):
         self.y -= self.vy
+
 
     def move_segment_down(self):
         self.y += self.vy
@@ -134,12 +131,15 @@ class Item(pygame.sprite.Sprite):
         self.rect.center = pygame.mouse.get_pos()
 
 
-worm = Worm()
-
 # new list of segments
+list_of_segments = [Segment(W / 2, H / 2), Segment(W / 2 - 5, H / 2 - 5)]  # Первый сегмент - голова
+for i in range(2, 11):
+    segment_x = list_of_segments[i - 1].x - list_of_segments[i - 2].x
+    segment_y = list_of_segments[i - 1].y - list_of_segments[i - 2].y
+    list_of_segments.append(Segment(segment_x, segment_y))
 test_segment = Segment(100, 100)
-list_of_segments = pygame.sprite.Group()
-list_of_segments.add(test_segment)
+# list_of_segments = pygame.sprite.Group()
+# list_of_segments.add(test_segment)
 
 # list of items and the
 test_item = Item(500, 500)
@@ -150,6 +150,8 @@ list_of_items.add(test_item)
 test_enemy = Enemy(500, 300)
 list_of_enemies = pygame.sprite.Group()
 list_of_enemies.add(test_enemy)
+
+worm = Worm(list_of_segments)
 
 
 def game():
@@ -170,10 +172,10 @@ def game():
             screen.blit(background, (rel_x, 0))
         x -= 2
 
-        list_of_enemies.draw(screen)
+        '''list_of_enemies.draw(screen)
         list_of_segments.draw(screen)
         list_of_items.draw(screen)
-        list_of_items.update()
+        list_of_items.update()'''
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
