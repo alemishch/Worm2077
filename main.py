@@ -25,16 +25,22 @@ class Worm:
     def __init__(self, group, list_s):
         self.list_of_segments = list_s
         self.group = group
-        self.angular_velocity = 1/10
         self.angle = 0
 
-    def move(self, x, y):
+    def move(self, event):
         """вижение на WASD"""
         head = self.list_of_segments[0]
+
         self.angle = math.atan(head.vy/head.vx)
-        final_angle = math.atan((y-head.y)/(y-head.x))
-        self.angle += (final_angle-self.angle)*self.angular_velocity  # FIXME нужна нормальная формула для поворота
-        print(self.angle, final_angle)
+        dir_angle = math.atan((event.pos[1]-head.y)/(event.pos[0]-head.x))
+
+        print(self.angle, dir_angle)
+
+        if dir_angle - self.angle > 0:
+            self.angle += 0.2
+        else:
+            self.angle -= 0.2
+
         head.vx = head.v*math.cos(self.angle)
         head.vy = head.v*math.sin(self.angle)
         self.set_speed()
@@ -83,7 +89,7 @@ class Segment(pygame.sprite.Sprite):
             color = (color1, color2, color3)
 
         super().__init__()
-        self.image = pygame.Surface([20, 20], pygame.SRCALPHA)
+        self.image = pygame.Surface([20, 20])
         pygame.draw.circle(self.image, color, (10, 10), 10, )
         self.rect = self.image.get_rect()
         self.rect.center = [x, y]
@@ -91,6 +97,9 @@ class Segment(pygame.sprite.Sprite):
     def move(self):
         self.x += self.vx
         self.y += self.vy
+
+    def update(self):
+        self.rect.center = [self.x, self.y]
 
 
 class Enemy(pygame.sprite.Sprite):
@@ -132,7 +141,8 @@ class Item(pygame.sprite.Sprite):
 
 # new list of segments
 group_of_segments = pygame.sprite.Group()
-list_of_segments = [Segment(RED, W / 2, H / 2), Segment('rand', W / 2 - 5, H / 2 - 5)]  # Первые 2 сегмента
+list_of_segments = [Segment(RED, W / 2, H / 2), Segment('rand', W / 2 - 5, H / 2 - 5)]  # Первый сегмент - голова,
+ # и второй
 group_of_segments.add(list_of_segments[0], list_of_segments[1])
 for i in range(2, 11):
     segment_x = 2*list_of_segments[i - 1].x - list_of_segments[i - 2].x
@@ -184,7 +194,7 @@ def game():
                 game_over = True
 
         if pygame.mouse.get_pressed()[0]:
-            worm.move(pygame.mouse.get_pos[0], pygame.mouse.get_pos[1])
+            worm.move(event)
 
 
 game()
