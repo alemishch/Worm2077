@@ -24,15 +24,14 @@ class Worm:
 
     def __init__(self, group, list_s):
         self.list_of_segments = list_s
+        self.head = list_of_segments[0]
         self.group = group
         self.angle = 0
 
     def move(self, event):
         """вижение на WASD"""
-        head = self.list_of_segments[0]
-
-        self.angle = math.atan(head.vy/head.vx)
-        dir_angle = math.atan((event.pos[1]-head.y)/(event.pos[0]-head.x))
+        self.angle = math.atan(self.head.vy/self.head.vx)
+        dir_angle = math.atan((event.pos[1]-self.head.y)/(event.pos[0]-self.head.x))
 
         print(self.angle, dir_angle)
 
@@ -41,11 +40,11 @@ class Worm:
         elif dir_angle - self.angle < 0:
             self.angle -= 0.2
 
-        if event.pos[0] - head.x < 0:
+        if event.pos[0] - self.head.x < 0:
             self.angle += math.pi
 
-        head.vx = head.v*math.cos(self.angle)
-        head.vy = head.v*math.sin(self.angle)
+        self.head.vx = self.head.v*math.cos(self.angle)
+        self.head.vy = self.head.v*math.sin(self.angle)
         self.set_speed()
         for segment in self.list_of_segments:
             segment.move()
@@ -92,7 +91,7 @@ class Segment(pygame.sprite.Sprite):
             color = (color1, color2, color3)
 
         super().__init__()
-        self.image = pygame.Surface([20, 20])
+        self.image = pygame.Surface([20, 20], pygame.SRCALPHA)
         pygame.draw.circle(self.image, color, (10, 10), 10, )
         self.rect = self.image.get_rect()
         self.rect.center = [x, y]
@@ -110,6 +109,7 @@ class Enemy(pygame.sprite.Sprite):
         super().__init__()
         self.x = x
         self.y = y
+        self.v = 3
         self.image = pygame.image.load("bug.png")
         self.image = pygame.transform.scale(self.image, (100, 100))
         self.rect = self.image.get_rect()
@@ -142,10 +142,17 @@ class Item(pygame.sprite.Sprite):
         self.rect.center = pygame.mouse.get_pos()
 
 
+def draw_trace(points, player):
+    """Червь оставляет след"""
+    prev = points[len(points) - 2]
+    dist = math.sqrt((prev[0]-player.head.x)**2 + (prev[1]-player.head.y)**2)
+    if dist >= 10:
+        points.append((player.head.x, player.head.y))
+
+
 # new list of segments
 group_of_segments = pygame.sprite.Group()
-list_of_segments = [Segment(RED, W / 2, H / 2), Segment('rand', W / 2 - 5, H / 2 - 5)]  # Первый сегмент - голова,
- # и второй
+list_of_segments = [Segment(RED, W / 2, H / 2), Segment('rand', W / 2 - 5, H / 2 - 5)]  # Первые 2 сегмента
 group_of_segments.add(list_of_segments[0], list_of_segments[1])
 for i in range(2, 11):
     segment_x = 2*list_of_segments[i - 1].x - list_of_segments[i - 2].x
@@ -154,6 +161,8 @@ for i in range(2, 11):
     group_of_segments.add(list_of_segments[i])
 # test_segment = Segment(100, 100)
 # list_of_segments.add(test_segment)
+
+used_area = []
 
 # list of items and the
 test_item = Item(500, 500)
