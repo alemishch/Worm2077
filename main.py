@@ -28,19 +28,17 @@ class Worm:
         self.group = group
         self.angle = 0
 
-    def move(self, event):
+    def move(self, x, y):
         """вижение на WASD"""
         self.angle = math.atan(self.head.vy/self.head.vx)
-        dir_angle = math.atan((event.pos[1]-self.head.y)/(event.pos[0]-self.head.x))
-
-        print(self.angle, dir_angle)
+        dir_angle = math.atan((y-self.head.y)/(x-self.head.x))
 
         if dir_angle - self.angle > 0:
             self.angle += 0.2
         elif dir_angle - self.angle < 0:
             self.angle -= 0.2
 
-        if event.pos[0] - self.head.x < 0:
+        if x - self.head.x < 0:
             self.angle += math.pi
 
         self.head.vx = self.head.v*math.cos(self.angle)
@@ -163,7 +161,7 @@ def draw_trace(points, player):
 
 # new list of segments
 group_of_segments = pygame.sprite.Group()
-list_of_segments = [Segment(RED, W / 2, H / 2), Segment('rand', W / 2 - 5, H / 2 - 5)]  # Первые 2 сегмента
+list_of_segments = [Segment(RED, W / 2, H / 2), Segment('rand', W / 2 - 9, H / 2 - 9)]  # Первые 2 сегмента
 group_of_segments.add(list_of_segments[0], list_of_segments[1])
 for i in range(2, 11):
     segment_x = 2*list_of_segments[i - 1].x - list_of_segments[i - 2].x
@@ -208,7 +206,7 @@ def game():
                 game_over = True
 
         if pygame.mouse.get_pressed()[0]:
-            worm.move(event)
+            worm.move(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
 
 
 game()
