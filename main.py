@@ -46,13 +46,13 @@ class Map:
             bottom_edge = int(self.head.y_lab - H*3/2)
             top_edge = int(self.head.y_lab - H/2)
 
-        new_item = Item(randint(left_edge, right_edge), randint(bottom_edge, top_edge), "berry")
+        new_item = Item(randint(left_edge, right_edge), randint(bottom_edge, top_edge), "seed")
         list_of_items.add(new_item)
         new_item = Item(randint(int(self.head.x_lab - W/2), int(self.head.x_lab + W/2)),
-                        randint(bottom_edge, top_edge), "berry")
+                        randint(bottom_edge, top_edge), "seed")
         list_of_items.add(new_item)
         new_item = Item(randint(left_edge, right_edge),
-                        randint(int(self.head.y_lab - H/2), int(self.head.y_lab + H/2)), "berry")
+                        randint(int(self.head.y_lab - H/2), int(self.head.y_lab + H/2)), "seed")
         list_of_items.add(new_item)
 
 
@@ -234,9 +234,11 @@ class Item(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = [self.x, self.y]
 
-    def eat(self):
-        if self.head.x_lab == self.rect.center:
-            pass
+    def eat_check(self):
+        if self.x_lab-20 < self.head.x_lab < self.x_lab+20 and self.y_lab-20 < self.head.y_lab < self.y_lab+20:
+            return 1
+        else:
+            return 0
 
     # update the item, will change later
     def update(self):
@@ -309,6 +311,9 @@ def game():
         pygame.display.flip()
         main_map.update_bg()
         # Draw items
+        for item in list_of_items:
+            if item.eat_check():
+                list_of_items.remove(item)
         list_of_items.update()
         list_of_items.draw(screen)
         for enemy in list_of_enemies:
@@ -318,8 +323,6 @@ def game():
         group_of_enemies.update()
         worm.update()
         group_of_segments.draw(screen)
-        if frame_count % 30 == 0:
-            main_map.generate()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -327,6 +330,8 @@ def game():
 
         if pygame.mouse.get_pressed()[0]:
             worm.move(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
+            if frame_count % 30 == 0:
+                main_map.generate()
 
 
 game()
