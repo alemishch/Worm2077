@@ -122,26 +122,39 @@ class Segment(pygame.sprite.Sprite):
         self.rect.center = [self.x, self.y]
 
 
-class Enemy(pygame.sprite.Sprite):
+'''class Enemy(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
-        self.x = x
-        self.y = y
+        self.zone_x = x
+        self.zone_y = y
+        self.x_lab = x
+        self.y_lab = y
+        self.x = -50
+        self.y = -50
         self.v = 3
-        self.image = pygame.image.load("bug.png")
-        self.image = pygame.transform.scale(self.image, (100, 100))
-        self.rect = self.image.get_rect()
+        self.image = pygame.image.load("beetle5.png")
+        self.left = False
+        self.right = False
+        self.stay = True
+        self.image = pygame.transform.scale(self.image, (25*5, 25*4)).convert_alpha()
+        self.rect = pygame.Rect((25, 0), (25, 25))
         self.rect.center = [x, y]
+        self.zone = pygame.image.load("RockBG.png")
+        self.zone = pygame.transform.scale(self.zone, (100, 30))
         self.type = choice(['Bug', 'Ant', 'Bird'])
 
     def move(self):
         pass
 
+    def animate(self, head):
+        if get_distance(get_head_cords(head)[0], get_head_cords(head)[1], self.x, self.y) < 900:
+            screen.blit(self.zone, [self.zone_x - get_head_cords(head)[0], self.zone_y - get_head_cords(head)[1]])
+
     def attack(self, player):
         pass
 
     def update(self):
-        pass
+        pass'''
 
 
 class Item(pygame.sprite.Sprite):
@@ -168,6 +181,17 @@ def draw_trace(points, player):
         points.append((player.head.x, player.head.y))
 
 
+def get_head_cords(head):
+    return [head.x_lab, head.y_lab]
+
+
+def get_distance(x1, y1, x2, y2):
+    dx = x1 - x2
+    dy = y1 - y2
+    dist = math.sqrt(dy ** 2 + dx ** 2)
+    return dist
+
+
 # new list of segments
 group_of_segments = pygame.sprite.Group()
 list_of_segments = [Segment(RED, W / 2, H / 2), Segment('rand', W / 2 - 9, H / 2 - 9)]  # Первые 2 сегмента
@@ -187,10 +211,12 @@ test_item = Item(500, 500)
 list_of_items = pygame.sprite.Group()
 list_of_items.add(test_item)
 
-# list of enemies
+'''# list of enemies
 test_enemy = Enemy(500, 300)
 list_of_enemies = pygame.sprite.Group()
 list_of_enemies.add(test_enemy)
+group_of_enemies = pygame.sprite.Group()
+group_of_enemies.add(Enemy(100, 100))'''
 
 worm = Worm(group_of_segments, list_of_segments)
 
@@ -203,8 +229,10 @@ def game():
 
         # Draw all the objects, update
         pygame.display.flip()
-
-        # group_of_enemies.draw(screen)
+        '''for enemy in list_of_enemies:
+            enemy.move()
+            enemy.animate(worm.head)
+        group_of_enemies.draw(screen)'''
         worm.update()
         group_of_segments.draw(screen)
         # list_of_items.draw(screen)
