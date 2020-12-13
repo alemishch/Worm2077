@@ -30,16 +30,15 @@ class Worm:
 
     def move(self, x, y):
         """вижение на положение мыши"""
-        self.angle = math.atan(self.head.vy/self.head.vx)
-        dir_angle = math.atan((y-self.head.y)/(x-self.head.x))
-
-        if dir_angle - self.angle > 0:
-            self.angle += 0.2
-        elif dir_angle - self.angle < 0:
-            self.angle -= 0.2
-
-        if x - self.head.x < 0:
-            self.angle += math.pi
+        if x != self.head.x:
+            dir_angle = math.atan((y-self.head.y)/(x-self.head.x))
+            if x - self.head.x < 0 and dir_angle < math.pi/2:
+                dir_angle += math.pi
+        elif y > self.head.y:
+            dir_angle = math.pi/2
+        else:
+            dir_angle = -math.pi/2
+        self.angle = dir_angle
 
         self.head.vx = self.head.v*math.cos(self.angle)
         self.head.vy = self.head.v*math.sin(self.angle)
