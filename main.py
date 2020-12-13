@@ -121,8 +121,8 @@ class Segment(pygame.sprite.Sprite):
     def update(self):
         self.rect.center = [self.x, self.y]
 
-
-'''class Enemy(pygame.sprite.Sprite):
+'''
+class Enemy(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
         self.zone_x = x
@@ -147,7 +147,7 @@ class Segment(pygame.sprite.Sprite):
         pass
 
     def animate(self, head):
-        if get_distance(get_head_cords(head)[0], get_head_cords(head)[1], self.x, self.y) < 900:
+        if  < 900:
             screen.blit(self.zone, [self.zone_x - get_head_cords(head)[0], self.zone_y - get_head_cords(head)[1]])
 
     def attack(self, player):
@@ -181,8 +181,10 @@ def draw_trace(points, player):
         points.append((player.head.x, player.head.y))
 
 
-def get_head_cords(head):
-    return [head.x_lab, head.y_lab]
+def get_screen_cords(head, x_lab, y_lab):
+    x = x_lab - head.x
+    y = y_lab - head.y
+    return [x, y]
 
 
 def get_distance(x1, y1, x2, y2):
