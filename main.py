@@ -1,6 +1,6 @@
 import pygame
 import math
-from random import randint
+from random import choice
 
 W = 1024
 H = 720
@@ -49,17 +49,17 @@ class Worm:
     def move(self, x, y):
         """вижение на положение мыши"""
         if x != self.head.x:
-            dir_angle = math.atan((y-self.head.y)/(x-self.head.x))
-            if x - self.head.x < 0 and dir_angle < math.pi/2:
+            dir_angle = math.atan((y - self.head.y) / (x - self.head.x))
+            if x - self.head.x < 0 and dir_angle < math.pi / 2:
                 dir_angle += math.pi
         elif y > self.head.y:
-            dir_angle = math.pi/2
+            dir_angle = math.pi / 2
         else:
-            dir_angle = -math.pi/2
+            dir_angle = -math.pi / 2
         self.angle = dir_angle
 
-        self.head.vx = self.head.v*math.cos(self.angle)
-        self.head.vy = self.head.v*math.sin(self.angle)
+        self.head.vx = self.head.v * math.cos(self.angle)
+        self.head.vy = self.head.v * math.sin(self.angle)
         self.set_speed()
         for segment in self.list_of_segments:
             segment.move()
@@ -81,14 +81,15 @@ class Worm:
         """Добавляет сегмент за последним из текущих, координаты задаются рекуррентно"""
         previous_segment = self.list_of_segments[len(self.list_of_segments) - 1]
         before_previous_segment = self.list_of_segments[len(self.list_of_segments) - 2]
-        x = 2*previous_segment.x - before_previous_segment.x
-        y = 2*previous_segment.y - before_previous_segment.y
-        self.list_of_segments += Segment("rand", x, y)
+        x = 2 * previous_segment.x - before_previous_segment.x
+        y = 2 * previous_segment.y - before_previous_segment.y
+        self.list_of_segments += Segment(x, y)
 
     def attack(self):
         pass
 
-    def update(self):
+    @staticmethod
+    def update():
         # Moving worm
         group_of_segments.update()
 
@@ -96,7 +97,7 @@ class Worm:
 class Segment(pygame.sprite.Sprite):
     """Класс сегмента, """
 
-    def __init__(self, color, x, y):
+    def __init__(self, x, y):
         self.vx = 3
         self.vy = 0
         self.v = 3
@@ -105,18 +106,13 @@ class Segment(pygame.sprite.Sprite):
         self.x_lab = x  # laboratory coordinates
         self.y_lab = y
 
-        """if color == "rand":
-            color1 = randint(0, 255)
-            color2 = randint(0, 255)
-            color3 = randint(0, 255)
-            color = (color1, color2, color3)"""
         color = (181, 91, 91)
         alt_color = (125, 66, 66)
 
         super().__init__()
         self.image = pygame.Surface([20, 20], pygame.SRCALPHA)
         pygame.draw.circle(self.image, color, (10, 10), 10)
-        pygame.draw.circle(self.image, alt_color, (10, 10), 10, width=1)
+        pygame.draw.circle(self.image, alt_color, (10, 10), 10, 1)
         self.rect = self.image.get_rect()
         self.rect.center = [x, y]
 
@@ -132,39 +128,48 @@ class Segment(pygame.sprite.Sprite):
         self.rect.center = [self.x, self.y]
 
 
-"""class Enemy(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self, x, y, player):
+        self.t = 0
+        self.right = [(0, 100), (50, 100), (100, 100), (150, 100), (200, 100)]
+        self.left = [(0, 150), (50, 150), (100, 150), (150, 150), (200, 150)]
         super().__init__()
         self.zone_x = x
         self.zone_y = y
         self.x_lab = x
         self.y_lab = y
-        self.x = -50
-        self.y = -50
+        self.x = get_screen_cords(player.head, self.x_lab, self.y_lab)[0]
+        self.y = get_screen_cords(player.head, self.x_lab, self.y_lab)[1]
         self.v = 3
-        self.image = pygame.image.load("beetle5.png")
+        self.full_image = pygame.image.load("beetle5.png").convert_alpha()
         self.left = False
         self.right = False
         self.stay = True
-        self.image = pygame.transform.scale(self.image, (25*5, 25*4)).convert_alpha()
-        self.rect = pygame.Rect((25, 0), (25, 25))
-        self.rect.center = [x, y]
+        self.full_image = pygame.transform.scale(self.full_image, (250, 200))
+        self.rect = pygame.Rect(self.x, self.y, 50, 50)
+        self.rect.topleft = [self.x, self.y]
+        self.image = self.full_image.subsurface(150, 0, 50, 50)
         self.zone = pygame.image.load("RockBG.png")
-        self.zone = pygame.transform.scale(self.zone, (100, 30))
+        self.zone = pygame.transform.scale(self.zone, (200, 60))
         self.type = choice(['Bug', 'Ant', 'Bird'])
 
     def move(self):
-        pass
+        self.rect.topleft = get_screen_cords(worm.head, self.x_lab, self.y_lab)
+        self.t += 1
+        if self.t <= FPS * 5:
+            self.x_lab += int(self.t/40)
+            # self.image = self.full_image.subsurface((self.right[int(self.t/FPS)]), (50, 50))
 
-    def animate(self, head):
-        if  < 900:
-            screen.blit(self.zone, [self.zone_x - get_head_cords(head)[0], self.zone_y - get_head_cords(head)[1]])
+    def animate(self):
+        if get_screen_cords(worm.head, self.zone_x, self.zone_y)[0] < 2000 and \
+                get_screen_cords(worm.head, self.zone_x, self.zone_y)[1] < 4050:
+            screen.blit(self.zone, get_screen_cords(worm.head, self.zone_x, self.zone_y))
 
     def attack(self, player):
         pass
 
     def update(self):
-        pass"""
+        pass
 
 
 class Item(pygame.sprite.Sprite):
@@ -190,7 +195,7 @@ class Item(pygame.sprite.Sprite):
 def draw_trace(points, player):
     """Червь оставляет след"""
     prev = points[len(points) - 2]
-    dist = math.sqrt((prev[0]-player.head.x)**2 + (prev[1]-player.head.y)**2)
+    dist = math.sqrt((prev[0] - player.head.x) ** 2 + (prev[1] - player.head.y) ** 2)
     if dist >= 10:
         points.append((player.head.x, player.head.y))
 
@@ -210,20 +215,22 @@ def get_distance(x1, y1, x2, y2):
 
 # new list of segments
 group_of_segments = pygame.sprite.Group()
-list_of_segments = [Segment(RED, W / 2, H / 2), Segment('rand', W / 2 - 9, H / 2 - 9)]  # Первые 2 сегмента
+list_of_segments = [Segment(W / 2, H / 2), Segment(W / 2 - 9, H / 2 - 9)]  # Первые 2 сегмента
 group_of_segments.add(list_of_segments[0], list_of_segments[1])
 for i in range(2, 20):
-    segment_x = 2*list_of_segments[i - 1].x - list_of_segments[i - 2].x
-    segment_y = 2*list_of_segments[i - 1].y - list_of_segments[i - 2].y
-    list_of_segments.append(Segment('rand', segment_x, segment_y))
+    segment_x = 2 * list_of_segments[i - 1].x - list_of_segments[i - 2].x
+    segment_y = 2 * list_of_segments[i - 1].y - list_of_segments[i - 2].y
+    list_of_segments.append(Segment(segment_x, segment_y))
     group_of_segments.add(list_of_segments[i])
 # test_segment = Segment(100, 100)
 # list_of_segments.add(test_segment)
 
 # Map
-map = Map()
+mainmap = Map()
 
 used_area = []
+
+worm = Worm(group_of_segments, list_of_segments)
 
 # list of items and the
 test_item = Item(500, 500, "berry")
@@ -231,14 +238,11 @@ test_item_2 = Item(400, 400, "seed")
 list_of_items = pygame.sprite.Group()
 list_of_items.add(test_item, test_item_2)
 
-'''# list of enemies
-test_enemy = Enemy(500, 300)
-list_of_enemies = pygame.sprite.Group()
-list_of_enemies.add(test_enemy)
+# list of enemies
+test_enemy = Enemy(500, 300, worm)
+list_of_enemies = [test_enemy]
 group_of_enemies = pygame.sprite.Group()
-group_of_enemies.add(Enemy(100, 100))'''
-
-worm = Worm(group_of_segments, list_of_segments)
+group_of_enemies.add(test_enemy)
 
 
 def game():
@@ -249,14 +253,15 @@ def game():
 
         # Draw all the objects, update
         pygame.display.flip()
-        map.update_bg()
+        mainmap.update_bg()
         # Draw items
-        '''for enemy in list_of_enemies:
-            enemy.move()
-            enemy.animate(worm.head)
-        group_of_enemies.draw(screen)'''
         list_of_items.update()
         list_of_items.draw(screen)
+        for enemy in list_of_enemies:
+            enemy.move()
+            enemy.animate()
+        group_of_enemies.draw(screen)
+        group_of_enemies.update()
         worm.update()
         group_of_segments.draw(screen)
 
