@@ -55,7 +55,7 @@ class Worm:
             distance = math.sqrt(delta_x ** 2 + delta_y ** 2)  # Расстояние между сегментом и предыдущим
             future_distance = math.sqrt((previous.y + previous.vy - segment.y) ** 2 +
                                         (previous.x + previous.vx - segment.x) ** 2)
-            segment.v = future_distance - distance
+            segment.v = future_distance - distance  # FIX change to constant distance
             segment.vx = segment.v * delta_x / distance  # Новая скорость
             segment.vy = segment.v * delta_y / distance  # Новая скорость
 
@@ -70,7 +70,7 @@ class Worm:
     def attack(self):
         pass
 
-    def update(self):
+    def update_bg(self):
         # Moving background
         rel_x = W - self.head.x_lab % background.get_rect().width
         rel_y = H - self.head.y_lab % background.get_rect().height
@@ -82,6 +82,7 @@ class Worm:
         if rel_x < W and rel_y < H:
             screen.blit(background, (rel_x, rel_y))
 
+    def update(self):
         # Moving worm
         group_of_segments.update()
 
@@ -158,19 +159,23 @@ class Enemy(pygame.sprite.Sprite):
 
 
 class Item(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, x_lab, y_lab):
         super().__init__()
-        self.x = x
-        self.y = y
+        self.x_lab = x_lab
+        self.y_lab = y_lab
+        self.x, self.y = get_screen_cords(list_of_segments[0], self.x_lab, self.y_lab)
+
         self.image = pygame.image.load("berry.png")
         self.image = pygame.transform.scale(self.image, (100, 100))
         self.rect = self.image.get_rect()
-        self.rect.center = [x, y]
+        self.rect.center = [self.x, self.y]
         self.type = choice(["Seed", "Corpse", "Berry"])
 
     # update the item, will change later
     def update(self):
-        self.rect.center = pygame.mouse.get_pos()
+        [self.x, self.y] = get_screen_cords(list_of_segments[0], self.x_lab, self.y_lab)
+        self.rect.center = self.x, self.y
+        print(self.x, self.y, self.x_lab, self.y_lab)
 
 
 def draw_trace(points, player):
@@ -182,8 +187,8 @@ def draw_trace(points, player):
 
 
 def get_screen_cords(head, x_lab, y_lab):
-    x = x_lab - head.x
-    y = y_lab - head.y
+    x = x_lab - head.x_lab
+    y = y_lab - head.y_lab
     return [x, y]
 
 
@@ -231,14 +236,16 @@ def game():
 
         # Draw all the objects, update
         pygame.display.flip()
+        worm.update_bg()
+        # Draw items
         '''for enemy in list_of_enemies:
             enemy.move()
             enemy.animate(worm.head)
         group_of_enemies.draw(screen)'''
+        list_of_items.update()
+        list_of_items.draw(screen)
         worm.update()
         group_of_segments.draw(screen)
-        # list_of_items.draw(screen)
-        # list_of_items.update()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
