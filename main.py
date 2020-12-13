@@ -1,6 +1,6 @@
 import pygame
 import math
-from random import choice
+from random import *
 
 W = 1024
 H = 720
@@ -30,6 +30,30 @@ class Map:
             screen.blit(self.background, (rel_x - self.background.get_rect().width, rel_y))
         if rel_x < W and rel_y < H:
             screen.blit(self.background, (rel_x, rel_y))
+
+    def generate(self):
+        if self.head.vx > 0:
+            left_edge = int(self.head.x_lab + W/2)
+            right_edge = int(self.head.x_lab + W*3/2)
+        else:
+            left_edge = int(self.head.x_lab - W*3/2)
+            right_edge = int(self.head.x_lab - W/2)
+
+        if self.head.vy > 0:
+            bottom_edge = int(self.head.y_lab + H/2)
+            top_edge = int(self.head.y_lab + H*3/2)
+        else:
+            bottom_edge = int(self.head.y_lab - H*3/2)
+            top_edge = int(self.head.y_lab - H/2)
+
+        new_item = Item(randint(left_edge, right_edge), randint(bottom_edge, top_edge), "berry")
+        list_of_items.add(new_item)
+        new_item = Item(randint(int(self.head.x_lab - W/2), int(self.head.x_lab + W/2)),
+                        randint(bottom_edge, top_edge), "berry")
+        list_of_items.add(new_item)
+        new_item = Item(randint(left_edge, right_edge),
+                        randint(int(self.head.y_lab - H/2), int(self.head.y_lab + H/2)), "berry")
+        list_of_items.add(new_item)
 
 
 class Worm:
@@ -180,11 +204,17 @@ class Item(pygame.sprite.Sprite):
         self.x, self.y = get_screen_cords(list_of_segments[0], self.x_lab, self.y_lab)
         self.type = item_type
 
-        # Berry
+        self.head = list_of_segments[0]
+
+        # Draw object
         self.image = pygame.image.load(self.type + ".png")
-        self.image = pygame.transform.scale(self.image, (100, 100))
+        self.image = pygame.transform.scale(self.image, (70, 70))
         self.rect = self.image.get_rect()
         self.rect.center = [self.x, self.y]
+
+    def eat(self):
+        if self.head.x_lab == self.rect.center:
+            pass
 
     # update the item, will change later
     def update(self):
@@ -226,7 +256,7 @@ for i in range(2, 20):
 # list_of_segments.add(test_segment)
 
 # Map
-mainmap = Map()
+main_map = Map()
 
 used_area = []
 
@@ -247,13 +277,15 @@ group_of_enemies.add(test_enemy)
 
 def game():
     game_over = False  # Закончена ли игра
+    frame_count = 0
 
     while not game_over:
         clock.tick(FPS)
+        frame_count += 1
 
         # Draw all the objects, update
         pygame.display.flip()
-        mainmap.update_bg()
+        main_map.update_bg()
         # Draw items
         list_of_items.update()
         list_of_items.draw(screen)
@@ -264,6 +296,8 @@ def game():
         group_of_enemies.update()
         worm.update()
         group_of_segments.draw(screen)
+        if frame_count % 30 == 0:
+            main_map.generate()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
