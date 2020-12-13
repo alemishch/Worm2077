@@ -155,24 +155,23 @@ class Segment(pygame.sprite.Sprite):
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, x, y, player):
         self.t = 0
-        self.right = [(0, 100), (50, 100), (100, 100), (150, 100), (200, 100)]
-        self.left = [(0, 150), (50, 150), (100, 150), (150, 150), (200, 150)]
+        self.right = [0, 50, 100, 150, 200]
+        self.left = [0, 50, 100, 150, 200]
         super().__init__()
         self.zone_x = x
         self.zone_y = y
         self.x_lab = x
         self.y_lab = y
+        self.is_moving_right = True
+        self.is_moving_left = False
         self.x = get_screen_cords(player.head, self.x_lab, self.y_lab)[0]
         self.y = get_screen_cords(player.head, self.x_lab, self.y_lab)[1]
         self.v = 3
         self.full_image = pygame.image.load("beetle5.png").convert_alpha()
-        self.left = False
-        self.right = False
-        self.stay = True
         self.full_image = pygame.transform.scale(self.full_image, (250, 200))
         self.rect = pygame.Rect(self.x, self.y, 50, 50)
         self.rect.topleft = [self.x, self.y]
-        self.image = self.full_image.subsurface(150, 0, 50, 50)
+        self.image = self.full_image.subsurface((100, 100), (50, 50))
         self.zone = pygame.image.load("RockBG.png")
         self.zone = pygame.transform.scale(self.zone, (200, 60))
         self.type = choice(['Bug', 'Ant', 'Bird'])
@@ -180,9 +179,32 @@ class Enemy(pygame.sprite.Sprite):
     def move(self):
         self.rect.topleft = get_screen_cords(worm.head, self.x_lab, self.y_lab)
         self.t += 1
-        if self.t <= FPS * 5:
-            self.x_lab += int(self.t/40)
-            # self.image = self.full_image.subsurface((self.right[int(self.t/FPS)]), (50, 50))
+
+        if self.x_lab <= self.zone_x + 150 and self.is_moving_right:
+            self.x_lab += 1
+            num = int(self.t/5) % 5
+            x = self.right[num]
+            self.image = self.full_image.subsurface((x, 100, 50, 50))
+            if self.x_lab >= self.zone_x + 149:
+                self.is_moving_right = False
+                self.t = 0
+
+        if self.x_lab >= self.zone_x and self.is_moving_left:
+            self.x_lab -= 0.7
+            num = int(self.t / 5) % 5
+            x = self.left[num]
+            self.image = self.full_image.subsurface((x, 150, 50, 50))
+            if self.x_lab <= self.zone_x + 1:
+                self.is_moving_left = False
+                self.t = 0
+
+        if not (self.is_moving_left or self.is_moving_right):
+            self.image = self.full_image.subsurface(0, 0, 50, 50)
+            if self.t == 100:
+                if self.x_lab < self.zone_x + 50:
+                    self.is_moving_right = True
+                else:
+                    self.is_moving_left = True
 
     def animate(self):
         if get_screen_cords(worm.head, self.zone_x, self.zone_y)[0] < 2000 and \
