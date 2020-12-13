@@ -246,12 +246,17 @@ class Item(pygame.sprite.Sprite):
         self.rect.center = self.x, self.y
 
 
-def draw_trace(points, player):
+def draw_trace(points):
     """Червь оставляет след"""
-    prev = points[len(points) - 2]
-    dist = math.sqrt((prev[0] - player.head.x) ** 2 + (prev[1] - player.head.y) ** 2)
+    prev = points[len(points) - 1]
+    dist = get_distance(prev[0], prev[1], worm.head.x_lab, worm.head.y_lab)
     if dist >= 10:
-        points.append((player.head.x, player.head.y))
+        points.append((worm.head.x_lab, worm.head.y_lab))
+    for point in points:
+        if get_distance(point[0], point[1], worm.head.x_lab, worm.head.y_lab) <= 1200:
+            x = int(get_screen_cords(worm.head, point[0], point[1])[0])
+            y = int(get_screen_cords(worm.head, point[0], point[1])[1])
+            pygame.draw.circle(screen, (123, 212, 99), (x, y), 15)
 
 
 def get_screen_cords(head, x_lab, y_lab):
@@ -282,7 +287,7 @@ for i in range(2, 20):
 # Map
 main_map = Map()
 
-used_area = []
+used_area = [(0, 0)]
 
 worm = Worm(group_of_segments, list_of_segments)
 
@@ -322,6 +327,7 @@ def game():
         group_of_enemies.draw(screen)
         group_of_enemies.update()
         worm.update()
+        draw_trace(used_area)
         group_of_segments.draw(screen)
 
         for event in pygame.event.get():
