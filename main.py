@@ -9,6 +9,7 @@ screen = pygame.display.set_mode((W, H))
 FPS = 60
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
+BROWN = (162, 82, 45)
 pygame.init()
 clock = pygame.time.Clock()
 
@@ -250,13 +251,15 @@ def draw_trace(points):
     """Червь оставляет след"""
     prev = points[len(points) - 1]
     dist = get_distance(prev[0], prev[1], worm.head.x_lab, worm.head.y_lab)
-    if dist >= 10:
+    if dist >= 3:
         points.append((worm.head.x_lab, worm.head.y_lab))
     for point in points:
         if get_distance(point[0], point[1], worm.head.x_lab, worm.head.y_lab) <= 1200:
             x = int(get_screen_cords(worm.head, point[0], point[1])[0])
             y = int(get_screen_cords(worm.head, point[0], point[1])[1])
-            pygame.draw.circle(screen, (123, 212, 99), (x, y), 15)
+            pygame.draw.circle(screen, BROWN, (x, y), 15)
+            if points.index(point) >= 500:
+                points.pop(0)
 
 
 def get_screen_cords(head, x_lab, y_lab):
@@ -316,6 +319,7 @@ def game():
         pygame.display.flip()
         main_map.update_bg()
         # Draw items
+        draw_trace(used_area)
         for item in list_of_items:
             if item.eat_check():
                 list_of_items.remove(item)
@@ -327,7 +331,6 @@ def game():
         group_of_enemies.draw(screen)
         group_of_enemies.update()
         worm.update()
-        draw_trace(used_area)
         group_of_segments.draw(screen)
 
         for event in pygame.event.get():
