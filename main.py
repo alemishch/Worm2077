@@ -159,23 +159,23 @@ class Enemy(pygame.sprite.Sprite):
 
 
 class Item(pygame.sprite.Sprite):
-    def __init__(self, x_lab, y_lab):
+    def __init__(self, x_lab, y_lab, type):
         super().__init__()
         self.x_lab = x_lab
         self.y_lab = y_lab
         self.x, self.y = get_screen_cords(list_of_segments[0], self.x_lab, self.y_lab)
+        self.type = type
 
-        self.image = pygame.image.load("berry.png")
+        # Berry
+        self.image = pygame.image.load(self.type + ".png")
         self.image = pygame.transform.scale(self.image, (100, 100))
         self.rect = self.image.get_rect()
         self.rect.center = [self.x, self.y]
-        self.type = choice(["Seed", "Corpse", "Berry"])
 
     # update the item, will change later
     def update(self):
         [self.x, self.y] = get_screen_cords(list_of_segments[0], self.x_lab, self.y_lab)
         self.rect.center = self.x, self.y
-        print(self.x, self.y, self.x_lab, self.y_lab)
 
 
 def draw_trace(points, player):
@@ -187,8 +187,8 @@ def draw_trace(points, player):
 
 
 def get_screen_cords(head, x_lab, y_lab):
-    x = x_lab - head.x_lab
-    y = y_lab - head.y_lab
+    x = x_lab - head.x_lab + head.x
+    y = y_lab - head.y_lab + head.y
     return [x, y]
 
 
@@ -214,9 +214,10 @@ for i in range(2, 11):
 used_area = []
 
 # list of items and the
-test_item = Item(500, 500)
+test_item = Item(500, 500, "berry")
+test_item_2 = Item(400, 400, "seed")
 list_of_items = pygame.sprite.Group()
-list_of_items.add(test_item)
+list_of_items.add(test_item, test_item_2)
 
 '''# list of enemies
 test_enemy = Enemy(500, 300)
