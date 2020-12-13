@@ -1,17 +1,35 @@
 import pygame
 import math
-from random import choice, randint
+from random import randint
 
 W = 1024
 H = 720
 screen = pygame.display.set_mode((W, H))
-background = pygame.image.load("background.jpg")
 
 FPS = 60
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 pygame.init()
 clock = pygame.time.Clock()
+
+
+class Map:
+    def __init__(self):
+        self.head = list_of_segments[0]  # Worm head
+        self.background = pygame.image.load("bg.png")
+
+    def update_bg(self):
+        # Moving background
+        rel_x = W - self.head.x_lab % self.background.get_rect().width
+        rel_y = H - self.head.y_lab % self.background.get_rect().height
+        screen.blit(self.background, (rel_x - self.background.get_rect().width,
+                                      rel_y - self.background.get_rect().height))
+        if rel_x < W:
+            screen.blit(self.background, (rel_x, rel_y - self.background.get_rect().height))
+        if rel_y < H:
+            screen.blit(self.background, (rel_x - self.background.get_rect().width, rel_y))
+        if rel_x < W and rel_y < H:
+            screen.blit(self.background, (rel_x, rel_y))
 
 
 class Worm:
@@ -55,7 +73,7 @@ class Worm:
             distance = math.sqrt(delta_x ** 2 + delta_y ** 2)  # Расстояние между сегментом и предыдущим
             future_distance = math.sqrt((previous.y + previous.vy - segment.y) ** 2 +
                                         (previous.x + previous.vx - segment.x) ** 2)
-            segment.v = future_distance - distance  # FIX change to constant distance
+            segment.v = future_distance - 7  # FIX change to constant distance
             segment.vx = segment.v * delta_x / distance  # Новая скорость
             segment.vy = segment.v * delta_y / distance  # Новая скорость
 
@@ -69,18 +87,6 @@ class Worm:
 
     def attack(self):
         pass
-
-    def update_bg(self):
-        # Moving background
-        rel_x = W - self.head.x_lab % background.get_rect().width
-        rel_y = H - self.head.y_lab % background.get_rect().height
-        screen.blit(background, (rel_x - background.get_rect().width, rel_y - background.get_rect().height))
-        if rel_x < W:
-            screen.blit(background, (rel_x, rel_y - background.get_rect().height))
-        if rel_y < H:
-            screen.blit(background, (rel_x - background.get_rect().width, rel_y))
-        if rel_x < W and rel_y < H:
-            screen.blit(background, (rel_x, rel_y))
 
     def update(self):
         # Moving worm
@@ -99,15 +105,18 @@ class Segment(pygame.sprite.Sprite):
         self.x_lab = x  # laboratory coordinates
         self.y_lab = y
 
-        if color == "rand":
+        """if color == "rand":
             color1 = randint(0, 255)
             color2 = randint(0, 255)
             color3 = randint(0, 255)
-            color = (color1, color2, color3)
+            color = (color1, color2, color3)"""
+        color = (181, 91, 91)
+        alt_color = (125, 66, 66)
 
         super().__init__()
         self.image = pygame.Surface([20, 20], pygame.SRCALPHA)
-        pygame.draw.circle(self.image, color, (10, 10), 10, )
+        pygame.draw.circle(self.image, color, (10, 10), 10)
+        pygame.draw.circle(self.image, alt_color, (10, 10), 10, width=1)
         self.rect = self.image.get_rect()
         self.rect.center = [x, y]
 
@@ -122,8 +131,8 @@ class Segment(pygame.sprite.Sprite):
     def update(self):
         self.rect.center = [self.x, self.y]
 
-'''
-class Enemy(pygame.sprite.Sprite):
+
+"""class Enemy(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
         self.zone_x = x
@@ -155,16 +164,16 @@ class Enemy(pygame.sprite.Sprite):
         pass
 
     def update(self):
-        pass'''
+        pass"""
 
 
 class Item(pygame.sprite.Sprite):
-    def __init__(self, x_lab, y_lab, type):
+    def __init__(self, x_lab, y_lab, item_type):
         super().__init__()
         self.x_lab = x_lab
         self.y_lab = y_lab
         self.x, self.y = get_screen_cords(list_of_segments[0], self.x_lab, self.y_lab)
-        self.type = type
+        self.type = item_type
 
         # Berry
         self.image = pygame.image.load(self.type + ".png")
@@ -203,13 +212,16 @@ def get_distance(x1, y1, x2, y2):
 group_of_segments = pygame.sprite.Group()
 list_of_segments = [Segment(RED, W / 2, H / 2), Segment('rand', W / 2 - 9, H / 2 - 9)]  # Первые 2 сегмента
 group_of_segments.add(list_of_segments[0], list_of_segments[1])
-for i in range(2, 11):
+for i in range(2, 20):
     segment_x = 2*list_of_segments[i - 1].x - list_of_segments[i - 2].x
     segment_y = 2*list_of_segments[i - 1].y - list_of_segments[i - 2].y
     list_of_segments.append(Segment('rand', segment_x, segment_y))
     group_of_segments.add(list_of_segments[i])
 # test_segment = Segment(100, 100)
 # list_of_segments.add(test_segment)
+
+# Map
+map = Map()
 
 used_area = []
 
@@ -237,7 +249,7 @@ def game():
 
         # Draw all the objects, update
         pygame.display.flip()
-        worm.update_bg()
+        map.update_bg()
         # Draw items
         '''for enemy in list_of_enemies:
             enemy.move()
