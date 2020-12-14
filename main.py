@@ -98,7 +98,7 @@ class Worm:
             distance = math.sqrt(delta_x ** 2 + delta_y ** 2)  # Расстояние между сегментом и предыдущим
             future_distance = math.sqrt((previous.y + previous.vy - segment.y) ** 2 +
                                         (previous.x + previous.vx - segment.x) ** 2)
-            segment.v = future_distance - 7  # FIX change to constant distance
+            segment.v = future_distance - 7  # constant distance
             segment.vx = segment.v * delta_x / distance  # Новая скорость
             segment.vy = segment.v * delta_y / distance  # Новая скорость
 
@@ -108,7 +108,8 @@ class Worm:
         before_previous_segment = self.list_of_segments[len(self.list_of_segments) - 2]
         x = 2 * previous_segment.x - before_previous_segment.x
         y = 2 * previous_segment.y - before_previous_segment.y
-        self.list_of_segments += Segment(x, y)
+        self.list_of_segments.append(Segment(x, y))
+        group_of_segments.add(self.list_of_segments[len(self.list_of_segments) - 1])
 
     def attack(self):
         pass
@@ -228,6 +229,7 @@ class Item(pygame.sprite.Sprite):
         self.type = item_type
 
         self.head = list_of_segments[0]
+        self.tail = list_of_segments[len(list_of_segments) - 1]
 
         # Draw object
         self.image = pygame.image.load(self.type + ".png")
@@ -237,6 +239,10 @@ class Item(pygame.sprite.Sprite):
 
     def eat_check(self):
         if self.x_lab-20 < self.head.x_lab < self.x_lab+20 and self.y_lab-20 < self.head.y_lab < self.y_lab+20:
+            if self.type == "seed":
+                worm.new_segment()
+            elif self.type == "berry":
+                pass
             return 1
         else:
             return 0
@@ -251,7 +257,7 @@ def draw_trace(points):
     """Червь оставляет след"""
     prev = points[len(points) - 1]
     dist = get_distance(prev[0], prev[1], worm.head.x_lab, worm.head.y_lab)
-    if dist >= 3:
+    if dist >= 2.9:
         points.append((worm.head.x_lab, worm.head.y_lab))
     for point in points:
         if get_distance(point[0], point[1], worm.head.x_lab, worm.head.y_lab) <= 1200:
