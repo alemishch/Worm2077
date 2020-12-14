@@ -13,6 +13,7 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 BROWN = (162, 82, 45)
 BLUE = (0, 0, 255)
+WHITE = (255, 255, 255)
 pygame.init()
 clock = pygame.time.Clock()
 
@@ -20,12 +21,11 @@ clock = pygame.time.Clock()
 class Bars(pygame.sprite.Sprite):
     def __init__(self, bar_type, y):
         self.type = bar_type
+        self.amount = 0
         if self.type == "health":
             self.color = RED
-            self.amount = 0
         elif self.type == "boost":
             self.color = BLUE
-            self.amount = 0
 
         super().__init__()
         self.image = pygame.Surface([300, 100], pygame.SRCALPHA)
@@ -34,16 +34,14 @@ class Bars(pygame.sprite.Sprite):
 
     def update(self):
         if self.type == "health":
-            self.color = RED
             self.amount = 0.5
         elif self.type == "boost":
-            self.color = BLUE
             if worm.boost_end > time.time():
                 self.amount = (worm.boost_end - time.time()) / worm.boost_time
             else:
                 self.amount = 0
 
-        pygame.draw.rect(self.image, 'white', (0, 0, 300, 30), border_radius=15)
+        pygame.draw.rect(self.image, WHITE, (0, 0, 300, 30), border_radius=15)
         pygame.draw.rect(self.image, self.color, (5, 5, 290 * self.amount, 20), border_radius=10)
         pygame.draw.rect(self.image, BLACK, (0, 0, 300, 30), width=5, border_radius=15)
 
@@ -52,6 +50,9 @@ class Map:
     def __init__(self):
         self.head = list_of_segments[0]  # Worm head
         self.background = pygame.image.load("bg.png")
+        self.rock_bg = pygame.image.load("rock.png")
+        self.grass_bg = pygame.image.load("grass.png")
+
 
     def update_bg(self):
         # Moving background
@@ -60,11 +61,36 @@ class Map:
         screen.blit(self.background, (rel_x - self.background.get_rect().width,
                                       rel_y - self.background.get_rect().height))
         if rel_x < W:
-            screen.blit(self.background, (rel_x, rel_y - self.background.get_rect().height))
+            if self.head.x_lab > W:
+                screen.blit(self.rock_bg, (rel_x, rel_y - self.background.get_rect().height))
+            else:
+                screen.blit(self.background, (rel_x, rel_y - self.background.get_rect().height))
         if rel_y < H:
-            screen.blit(self.background, (rel_x - self.background.get_rect().width, rel_y))
+            if self.head.y_lab > H and rel_y > 0:
+                screen.blit(self.rock_bg, (rel_x - self.background.get_rect().width, rel_y))
+            else:
+                screen.blit(self.background, (rel_x - self.background.get_rect().width, rel_y))
         if rel_x < W and rel_y < H:
-            screen.blit(self.background, (rel_x, rel_y))
+            if self.head.x_lab > W or (self.head.y_lab > H and rel_y > 0):
+                screen.blit(self.rock_bg, (rel_x, rel_y))
+            else:
+                screen.blit(self.background, (rel_x, rel_y))
+
+        # additional bg
+        if self.head.x_lab < -W or self.head.y_lab < -H:
+            rel_x = W - (-self.head.x_lab) % self.background.get_rect().width
+            rel_y = H - (-self.head.y_lab) % self.background.get_rect().height
+            print(rel_x, rel_y)
+            if rel_x < W:
+                if self.head.x_lab < -W:
+                    screen.blit(self.rock_bg, (-rel_x, H - rel_y))
+                    screen.blit(self.rock_bg, (-rel_x,  H - self.background.get_rect().height - rel_y))
+            if rel_y < H:
+                if self.head.y_lab < -H and rel_y > 0:
+                    screen.blit(self.grass_bg, (self.background.get_rect().width - rel_x,
+                                                H - self.background.get_rect().height - rel_y))
+                    if rel_x < W:
+                        screen.blit(self.grass_bg, (-rel_x,  H - self.background.get_rect().height - rel_y))
 
     def generate(self):
         if self.head.vx > 0:
