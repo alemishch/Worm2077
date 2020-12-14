@@ -12,8 +12,40 @@ FPS = 60
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 BROWN = (162, 82, 45)
+BLUE = (0, 0, 255)
 pygame.init()
 clock = pygame.time.Clock()
+
+
+class Bars(pygame.sprite.Sprite):
+    def __init__(self, bar_type, y):
+        self.type = bar_type
+        if self.type == "health":
+            self.color = RED
+            self.amount = 0
+        elif self.type == "boost":
+            self.color = BLUE
+            self.amount = 0
+
+        super().__init__()
+        self.image = pygame.Surface([300, 100], pygame.SRCALPHA)
+        self.rect = self.image.get_rect()
+        self.rect.center = [160, y]
+
+    def update(self):
+        if self.type == "health":
+            self.color = RED
+            self.amount = 0.5
+        elif self.type == "boost":
+            self.color = BLUE
+            if worm.boost_end > time.time():
+                self.amount = (worm.boost_end - time.time()) / worm.boost_time
+            else:
+                self.amount = 0
+
+        pygame.draw.rect(self.image, 'white', (0, 0, 300, 30), border_radius=15)
+        pygame.draw.rect(self.image, self.color, (5, 5, 290 * self.amount, 20), border_radius=10)
+        pygame.draw.rect(self.image, BLACK, (0, 0, 300, 30), width=5, border_radius=15)
 
 
 class Map:
@@ -74,7 +106,8 @@ class Worm:
         self.head = list_of_segments[0]
         self.group = group
         self.angle = 0
-        self.boost_end = 0  # change
+        self.boost_end = time.time()  # change
+        self.boost_time = 5
 
     def move(self, x, y):
         """вижение на положение мыши"""
@@ -117,7 +150,7 @@ class Worm:
         group_of_segments.add(self.list_of_segments[len(self.list_of_segments) - 1])
 
     def boost(self):
-        self.boost_end = time.time() + 5
+        self.boost_end = time.time() + self.boost_time
 
     def attack(self):
         pass
@@ -324,6 +357,12 @@ list_of_enemies = [test_enemy]
 group_of_enemies = pygame.sprite.Group()
 group_of_enemies.add(test_enemy)
 
+# Bars
+health_bar = Bars("health", 60)
+boost_bar = Bars("boost", 100)
+group_of_bars = pygame.sprite.Group()
+group_of_bars.add(health_bar, boost_bar)
+
 
 def game():
     game_over = False  # Закончена ли игра
@@ -350,6 +389,9 @@ def game():
         group_of_enemies.update()
         worm.update()
         group_of_segments.draw(screen)
+
+        group_of_bars.update()
+        group_of_bars.draw(screen)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
