@@ -1,6 +1,8 @@
 import pygame
 import math
 from random import *
+import time
+import numpy as np
 
 W = 1024
 H = 720
@@ -47,13 +49,15 @@ class Map:
             bottom_edge = int(self.head.y_lab - H*3/2)
             top_edge = int(self.head.y_lab - H/2)
 
-        new_item = Item(randint(left_edge, right_edge), randint(bottom_edge, top_edge), "seed")
+        new_item = Item(randint(left_edge, right_edge), randint(bottom_edge, top_edge),
+                        np.random.choice(["seed", "berry"], p=[0.9, 0.1]))
         list_of_items.add(new_item)
         new_item = Item(randint(int(self.head.x_lab - W/2), int(self.head.x_lab + W/2)),
-                        randint(bottom_edge, top_edge), "seed")
+                        randint(bottom_edge, top_edge), np.random.choice(["seed", "berry"], p=[0.9, 0.1]))
         list_of_items.add(new_item)
         new_item = Item(randint(left_edge, right_edge),
-                        randint(int(self.head.y_lab - H/2), int(self.head.y_lab + H/2)), "seed")
+                        randint(int(self.head.y_lab - H/2), int(self.head.y_lab + H/2)),
+                        np.random.choice(["seed", "berry"], p=[0.9, 0.1]))
         list_of_items.add(new_item)
 
 
@@ -70,6 +74,7 @@ class Worm:
         self.head = list_of_segments[0]
         self.group = group
         self.angle = 0
+        self.boost_end = 0  # change
 
     def move(self, x, y):
         """вижение на положение мыши"""
@@ -98,7 +103,7 @@ class Worm:
             distance = math.sqrt(delta_x ** 2 + delta_y ** 2)  # Расстояние между сегментом и предыдущим
             future_distance = math.sqrt((previous.y + previous.vy - segment.y) ** 2 +
                                         (previous.x + previous.vx - segment.x) ** 2)
-            segment.v = future_distance - 7  # constant distance
+            segment.v = future_distance - 5  # constant distance
             segment.vx = segment.v * delta_x / distance  # Новая скорость
             segment.vy = segment.v * delta_y / distance  # Новая скорость
 
@@ -111,11 +116,19 @@ class Worm:
         self.list_of_segments.append(Segment(x, y))
         group_of_segments.add(self.list_of_segments[len(self.list_of_segments) - 1])
 
+    def boost(self):
+        self.boost_end = time.time() + 5
+
     def attack(self):
         pass
 
-    @staticmethod
-    def update():
+    def update(self):
+        # boost
+        if self.boost_end > time.time():
+            self.head.v = 5
+        else:
+            self.head.v = 3
+
         # Moving worm
         group_of_segments.update()
 
@@ -229,7 +242,6 @@ class Item(pygame.sprite.Sprite):
         self.type = item_type
 
         self.head = list_of_segments[0]
-        self.tail = list_of_segments[len(list_of_segments) - 1]
 
         # Draw object
         self.image = pygame.image.load(self.type + ".png")
@@ -242,7 +254,7 @@ class Item(pygame.sprite.Sprite):
             if self.type == "seed":
                 worm.new_segment()
             elif self.type == "berry":
-                pass
+                worm.boost()
             return 1
         else:
             return 0
