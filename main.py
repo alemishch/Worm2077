@@ -34,7 +34,7 @@ class Bars(pygame.sprite.Sprite):
 
     def update(self):
         if self.type == "health":
-            self.amount = 0.5
+            self.amount = worm.health
         elif self.type == "boost":
             if worm.boost_end > time.time():
                 self.amount = (worm.boost_end - time.time()) / worm.boost_time
@@ -120,6 +120,7 @@ class Worm:
         self.tail = list_of_segments[len(list_of_segments) - 1]
         self.group = group
         self.angle = 0
+        self.health = 1
         self.boost_end = time.time()  # change
         self.boost_time = 5
 
@@ -246,6 +247,7 @@ class Enemy(pygame.sprite.Sprite):
         self.zone = pygame.image.load("cave.png")
         # self.zone = pygame.transform.scale(self.zone, (200, 60))
         self.type = choice(['Bug', 'Ant', 'Bird'])
+        self.damage = 0.1
 
     def move(self):
         self.rect.topleft = get_screen_cords(worm.head, int(self.x_lab), int(self.y_lab))
@@ -321,6 +323,8 @@ class Enemy(pygame.sprite.Sprite):
         dist = get_distance(player.tail.x_lab, player.tail.y_lab, self.x_lab + 25, self.y_lab + 25)
         if get_distance(player.head.x_lab, player.head.y_lab, self.x_lab + 25, self.y_lab + 25) <= 20:
             self.alive = False
+        if get_distance(player.tail.x_lab, player.tail.y_lab, self.x_lab + 25, self.y_lab + 25) <= 3:
+            player.health -= self.damage
         if dist <= 200:
             self.is_not_attacking = False
             dx = self.x_lab - player.tail.x_lab + 25
