@@ -272,27 +272,37 @@ class Enemy(pygame.sprite.Sprite):
         dist = get_distance(self.x_lab, self.y_lab, self.zone_x + 75, self.zone_y)
         dx = self.x_lab - 75 - self.zone_x
         dy = self.y_lab - self.zone_y
+        if dx >= 0:
+            self.animate_left()
+        else:
+            self.animate_right()
         self.x_lab -= self.v * dx / dist
         self.y_lab -= self.v * dy / dist
         if abs(self.x_lab - 75 - self.zone_x) <= 1 and abs(self.y_lab - self.zone_y) <= 1:
             self.x_lab = self.zone_x + 75
             self.y_lab = self.zone_y
 
+    def animate_right(self):
+        num = int(self.t / 5) % 5
+        x = self.right[num]
+        self.image = self.full_image.subsurface((x, 100, 50, 50))
+
+    def animate_left(self):
+        num = int(self.t / 5) % 5
+        x = self.left[num]
+        self.image = self.full_image.subsurface((x, 150, 50, 50))
+
     def be_home(self):
         if self.x_lab <= self.zone_x + 150 and self.is_moving_right:
             self.x_lab += 1
-            num = int(self.t / 5) % 5
-            x = self.right[num]
-            self.image = self.full_image.subsurface((x, 100, 50, 50))
+            self.animate_right()
             if self.x_lab >= self.zone_x + 149:
                 self.is_moving_right = False
                 self.t = 0
 
         if self.x_lab >= self.zone_x and self.is_moving_left:
             self.x_lab -= 0.7
-            num = int(self.t / 5) % 5
-            x = self.left[num]
-            self.image = self.full_image.subsurface((x, 150, 50, 50))
+            self.animate_left()
             if self.x_lab <= self.zone_x + 1:
                 self.is_moving_left = False
                 self.t = 0
@@ -320,6 +330,10 @@ class Enemy(pygame.sprite.Sprite):
             self.is_not_attacking = False
             dx = self.x_lab - player.head.x_lab + 25
             dy = self.y_lab - player.head.y_lab + 25
+            if dx <= 0:
+                self.animate_right()
+            else:
+                self.animate_left()
             self.x_lab -= self.v * dx / dist
             self.y_lab -= self.v * dy / dist
             if dist == 0:
