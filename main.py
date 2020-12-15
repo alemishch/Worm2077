@@ -96,7 +96,7 @@ class Map:
                         screen.blit(self.grass_bg, (-rel_x, H - self.bg_height - rel_y))
 
     @staticmethod
-    def generate(number_of_items, number_of_enemies):
+    def generate(number_of_items):
         for j in range(number_of_items):
             new_item = Item(randint(-main_map.width/2 + main_map.bg_width - W/2,
                                     main_map.width/2 - main_map.bg_width + W/2),
@@ -104,14 +104,6 @@ class Map:
                                     main_map.height/2 - main_map.bg_height + H/2),
                             np.random.choice(["seed", "berry"], p=[0.9, 0.1]))
             list_of_items.add(new_item)
-        for k in range(number_of_enemies):
-            new_enemy = Enemy(randint(-main_map.width/2 + main_map.bg_width - W/2,
-                                      main_map.width/2 - main_map.bg_width + W/2),
-                              randint(-main_map.height/2 + main_map.bg_height - H/2,
-                                      main_map.height/2 - main_map.bg_height + H/2),
-                              worm)
-            list_of_enemies.append(new_enemy)
-            group_of_enemies.add(new_enemy)
 
 
 class Worm:
@@ -238,7 +230,7 @@ class Enemy(pygame.sprite.Sprite):
         self.left = [0, 50, 100, 150, 200]
         super().__init__()
         self.zone_x = x
-        self.zone_y = y - 50
+        self.zone_y = y
         self.x_lab = x
         self.y_lab = y
         self.is_moving_right = True
@@ -252,8 +244,8 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = pygame.Rect(x, y, 50, 50)
         self.rect.topleft = [x, y]
         self.image = self.full_image.subsurface((100, 100), (50, 50))
-        self.zone = pygame.image.load("cave.png")
-        # self.zone = pygame.transform.scale(self.zone, (200, 60))
+        self.zone = pygame.image.load("RockBG.png")
+        self.zone = pygame.transform.scale(self.zone, (200, 60))
         self.type = choice(['Bug', 'Ant', 'Bird'])
         self.damage = 0.1
 
@@ -441,40 +433,62 @@ group_of_bars = pygame.sprite.Group()
 group_of_bars.add(health_bar, boost_bar)
 
 
+bg_image = pygame.image.load("menu.jpg")
+bg_image = pygame.transform.scale(bg_image, [W, H])
+screen.blit(bg_image, (0, 0, W, H))
+ng_active = pygame.image.load("ng_active.png")
+ng = pygame.image.load("ng.png")
+
+
+def show_menu(event):
+    if event.type == pygame.MOUSEMOTION:
+        if 450 <= event.pos[1] <= 600 and 410 <= event.pos[0] <= 610:
+            screen.blit(ng_active, (410, 450))
+        else:
+            screen.blit(ng, (410, 450))
+    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and \
+            450 <= event.pos[1] <= 600 and 410 <= event.pos[0] <= 610:
+        main_map.generate(200)
+        return True
+
+
 def game():
     game_over = False  # Закончена ли игра
-    main_map.generate(200, 20)
+    game_started = False
 
     while not game_over:
         clock.tick(FPS)
-
-        # Draw all the objects, update
         pygame.display.flip()
-        main_map.update_bg()
-        # Draw items
-        draw_trace(used_area)
-        for item in list_of_items:
-            if item.eat_check():
-                list_of_items.remove(item)
-        list_of_items.update()
-        list_of_items.draw(screen)
-        for enemy in list_of_enemies:
-            enemy.move()
-            enemy.animate()
-        group_of_enemies.draw(screen)
-        group_of_enemies.update()
-        worm.update()
-        group_of_segments.draw(screen)
+        if game_started:
+            # Draw all the objects, update
+            main_map.update_bg()
+            # Draw items
+            draw_trace(used_area)
+            for item in list_of_items:
+                if item.eat_check():
+                    list_of_items.remove(item)
+            list_of_items.update()
+            list_of_items.draw(screen)
+            for enemy in list_of_enemies:
+                enemy.move()
+                enemy.animate()
+            group_of_enemies.draw(screen)
+            group_of_enemies.update()
+            worm.update()
+            group_of_segments.draw(screen)
 
-        group_of_bars.update()
-        group_of_bars.draw(screen)
+            group_of_bars.update()
+            group_of_bars.draw(screen)
+
+            if pygame.mouse.get_pressed()[0]:
+                worm.move(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 game_over = True
 
-        if pygame.mouse.get_pressed()[0]:
-            worm.move(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
+            if not game_started:
+                game_started = show_menu(event)
 
 
 game()
