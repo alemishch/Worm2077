@@ -32,7 +32,7 @@ class Bars(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = [160, y]
 
-    def update(self):
+    def update(self, worm):
         if self.type == "health":
             self.amount = worm.health
         elif self.type == "boost":
@@ -47,7 +47,7 @@ class Bars(pygame.sprite.Sprite):
 
 
 class Map:
-    def __init__(self, width, height):
+    def __init__(self, width, height, list_of_segments):
         self.head = list_of_segments[0]  # Worm head
         self.background = pygame.image.load("bg.png")
         self.rock_bg = pygame.image.load("rock.png")
@@ -64,51 +64,52 @@ class Map:
         screen.blit(self.background, (rel_x - self.bg_width,
                                       rel_y - self.bg_height))
         if rel_x < W:
-            if self.head.x_lab > self.width/2 - self.bg_width:
+            if self.head.x_lab > self.width / 2 - self.bg_width:
                 screen.blit(self.rock_bg, (rel_x, rel_y - self.bg_height))
             else:
                 screen.blit(self.background, (rel_x, rel_y - self.bg_height))
         if rel_y < H:
-            if self.head.y_lab > self.height/2 - self.bg_height and rel_y > 0:
+            if self.head.y_lab > self.height / 2 - self.bg_height and rel_y > 0:
                 screen.blit(self.rock_bg, (rel_x - self.bg_width, rel_y))
             else:
                 screen.blit(self.background, (rel_x - self.bg_width, rel_y))
         if rel_x < W and rel_y < H:
-            if self.head.x_lab > self.width/2 - self.bg_width or \
-                    (self.head.y_lab > self.height/2 - self.bg_height and rel_y > 0):
+            if self.head.x_lab > self.width / 2 - self.bg_width or \
+                    (self.head.y_lab > self.height / 2 - self.bg_height and rel_y > 0):
                 screen.blit(self.rock_bg, (rel_x, rel_y))
             else:
                 screen.blit(self.background, (rel_x, rel_y))
 
         # additional bg
-        if self.head.x_lab < - self.width/2 + self.bg_width or self.head.y_lab < - self.height/2 + self.bg_height:
+        if self.head.x_lab < - self.width / 2 + self.bg_width or self.head.y_lab < - self.height / 2 + self.bg_height:
             rel_x = W - (-self.head.x_lab) % self.bg_width
             rel_y = H - (-self.head.y_lab) % self.bg_height
             if rel_x < W:
-                if self.head.x_lab < - self.width/2 + self.bg_width:
+                if self.head.x_lab < - self.width / 2 + self.bg_width:
                     screen.blit(self.rock_bg, (-rel_x, H - rel_y))
                     screen.blit(self.rock_bg, (-rel_x, H - self.bg_height - rel_y))
             if rel_y < H:
-                if self.head.y_lab < - self.height/2 + self.bg_height and rel_y > 0:
+                if self.head.y_lab < - self.height / 2 + self.bg_height and rel_y > 0:
                     screen.blit(self.grass_bg, (self.bg_width - rel_x,
                                                 H - self.bg_height - rel_y))
                     if rel_x < W:
                         screen.blit(self.grass_bg, (-rel_x, H - self.bg_height - rel_y))
 
     @staticmethod
-    def generate(number_of_items, number_of_enemies):
+    def generate(number_of_items, number_of_enemies, main_map, list_of_items, list_of_segments, worm, group_of_enemies,
+                 list_of_enemies):
         for j in range(number_of_items):
-            new_item = Item(randint(-main_map.width/2 + main_map.bg_width - W/2,
-                                    main_map.width/2 - main_map.bg_width + W/2),
-                            randint(-main_map.height/2 + main_map.bg_height - H/2,
-                                    main_map.height/2 - main_map.bg_height + H/2),
-                            np.random.choice(["seed", "berry"], p=[0.9, 0.1]))
+            new_item = Item(randint(-main_map.width / 2 + main_map.bg_width - W / 2,
+                                    main_map.width / 2 - main_map.bg_width + W / 2),
+                            randint(-main_map.height / 2 + main_map.bg_height - H / 2,
+                                    main_map.height / 2 - main_map.bg_height + H / 2),
+                            np.random.choice(["seed", "berry"], p=[0.9, 0.1]), list_of_segments)
             list_of_items.add(new_item)
         for k in range(number_of_enemies):
-            new_enemy = Enemy(randint(-main_map.width/2 + main_map.bg_width - W/2,
-                                      main_map.width/2 - main_map.bg_width + W/2),
-                              randint(-main_map.height/2 + main_map.bg_height - H/2,
-                                      main_map.height/2 - main_map.bg_height + H/2),
+            new_enemy = Enemy(randint(-main_map.width / 2 + main_map.bg_width - W / 2,
+                                      main_map.width / 2 - main_map.bg_width + W / 2),
+                              randint(-main_map.height / 2 + main_map.bg_height - H / 2,
+                                      main_map.height / 2 - main_map.bg_height + H / 2),
                               worm)
             list_of_enemies.append(new_enemy)
             group_of_enemies.add(new_enemy)
@@ -122,17 +123,23 @@ class Worm:
     update() - отрисовка
     list_of_segments - список элементов класса segment, сегментов червя"""
 
-    def __init__(self, group, list_s):
-        self.list_of_segments = list_s
+    def __init__(self, group, list_of_segments):
+        self.list_of_segments = list_of_segments
         self.head = list_of_segments[0]
         self.tail = list_of_segments[len(list_of_segments) - 1]
         self.group = group
         self.angle = 0
-        self.health = 1
+        self.health = 10
         self.boost_end = time.time()  # change
         self.boost_time = 5
 
-    def move(self, x, y):
+    def check_dead(self):
+        if self.health <= 0:
+            return True
+        else:
+            return False
+
+    def move(self, x, y, main_map, list_of_segments, worm):
         """вижение на положение мыши"""
         if x != self.head.x:
             dir_angle = math.atan((y - self.head.y) / (x - self.head.x))
@@ -148,7 +155,7 @@ class Worm:
         self.head.vy = self.head.v * math.sin(self.angle)
         self.set_speed()
         for segment in self.list_of_segments:
-            segment.move()
+            segment.move(main_map, list_of_segments, worm)
 
     def set_speed(self):
         for count in range(1, len(self.list_of_segments)):
@@ -163,7 +170,7 @@ class Worm:
             segment.vx = segment.v * delta_x / distance  # Новая скорость
             segment.vy = segment.v * delta_y / distance  # Новая скорость
 
-    def new_segment(self):
+    def new_segment(self, group_of_segments):
         """Добавляет сегмент за последним из текущих, координаты задаются рекуррентно"""
         previous_segment = self.list_of_segments[len(self.list_of_segments) - 1]
         before_previous_segment = self.list_of_segments[len(self.list_of_segments) - 2]
@@ -178,7 +185,7 @@ class Worm:
     def attack(self):
         pass
 
-    def update(self):
+    def update(self, group_of_segments):
         # boost
         if self.boost_end > time.time():
             self.head.v = 5
@@ -211,12 +218,12 @@ class Segment(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = [x, y]
 
-    def move(self):
-        if not - main_map.width/2 + main_map.bg_width/2 < self.x_lab + self.vx \
-                < main_map.width/2 - main_map.bg_width/2 and self == worm.head:
+    def move(self, main_map, list_of_segments, worm):
+        if not - main_map.width / 2 + main_map.bg_width / 2 < self.x_lab + self.vx \
+               < main_map.width / 2 - main_map.bg_width / 2 and self == worm.head:
             self.vx = 0
-        if not - main_map.height/2 + main_map.bg_height - H/2 < self.y_lab + self.vy \
-                < main_map.height/2 - main_map.bg_height + H/2 and self == worm.head:
+        if not - main_map.height / 2 + main_map.bg_height - H / 2 < self.y_lab + self.vy \
+           < main_map.height / 2 - main_map.bg_height + H / 2 and self == worm.head:
             self.vy = 0
 
         # changing screen coordinates
@@ -259,7 +266,7 @@ class Enemy(pygame.sprite.Sprite):
         self.cool_down = 0.5
         self.last_attack = 0
 
-    def move(self):
+    def move(self, worm):
         self.rect.topleft = get_screen_cords(worm.head, int(self.x_lab), int(self.y_lab))
         if self.alive:
             self.t += 1
@@ -324,7 +331,7 @@ class Enemy(pygame.sprite.Sprite):
                 else:
                     self.is_moving_left = True
 
-    def animate(self):
+    def animate(self, worm):
         if get_screen_cords(worm.head, self.zone_x, self.zone_y)[0] < 2000 and \
                 get_screen_cords(worm.head, self.zone_x, self.zone_y)[1] < 4050:
             screen.blit(self.zone, get_screen_cords(worm.head, self.zone_x, self.zone_y))
@@ -359,7 +366,7 @@ class Enemy(pygame.sprite.Sprite):
 
 
 class Item(pygame.sprite.Sprite):
-    def __init__(self, x_lab, y_lab, item_type):
+    def __init__(self, x_lab, y_lab, item_type, list_of_segments):
         super().__init__()
         self.x_lab = x_lab
         self.y_lab = y_lab
@@ -374,14 +381,14 @@ class Item(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = [self.x, self.y]
 
-    def eat_check(self):
+    def eat_check(self, worm, group_of_segments):
         if self.x_lab - 20 < self.head.x_lab < self.x_lab + 20 and self.y_lab - 20 < self.head.y_lab < self.y_lab + 20:
             if self.type == "seed":
-                worm.new_segment()
+                worm.new_segment(group_of_segments)
                 if worm.health < 0.98:
                     worm.health += 0.02
                 else:
-                     worm.health = 1
+                    worm.health = 1
             elif self.type == "berry":
                 worm.boost()
             return 1
@@ -389,12 +396,12 @@ class Item(pygame.sprite.Sprite):
             return 0
 
     # update the item
-    def update(self):
+    def update(self, list_of_segments):
         [self.x, self.y] = get_screen_cords(list_of_segments[0], self.x_lab, self.y_lab)
         self.rect.center = self.x, self.y
 
 
-def draw_trace(points):
+def draw_trace(points, worm):
     """Червь оставляет след"""
     prev = points[len(points) - 1]
     dist = get_distance(prev[0], prev[1], worm.head.x_lab, worm.head.y_lab)
@@ -405,7 +412,7 @@ def draw_trace(points):
             x = int(get_screen_cords(worm.head, point[0], point[1])[0])
             y = int(get_screen_cords(worm.head, point[0], point[1])[1])
             pygame.draw.circle(screen, BROWN, (x, y), 15)
-            if points.index(point) >= 500:
+            if points.index(point) >= 5000:
                 points.pop(0)
 
 
@@ -422,47 +429,17 @@ def get_distance(x1, y1, x2, y2):
     return dist
 
 
-# new list of segments
-group_of_segments = pygame.sprite.Group()
-list_of_segments = [Segment(W / 2, H / 2), Segment(W / 2 - 9, H / 2 - 9)]  # Первые 2 сегмента
-group_of_segments.add(list_of_segments[0], list_of_segments[1])
-for i in range(2, 20):
-    segment_x = 2 * list_of_segments[i - 1].x - list_of_segments[i - 2].x
-    segment_y = 2 * list_of_segments[i - 1].y - list_of_segments[i - 2].y
-    list_of_segments.append(Segment(segment_x, segment_y))
-    group_of_segments.add(list_of_segments[i])
-
-# Map
-main_map = Map(4*1024, 4*1024)
-
-used_area = [(0, 0)]
-
-worm = Worm(group_of_segments, list_of_segments)
-
-# list of items and the
-list_of_items = pygame.sprite.Group()
-
-# list of enemies
-test_enemy = Enemy(900, 500, worm)
-list_of_enemies = [test_enemy]
-group_of_enemies = pygame.sprite.Group()
-group_of_enemies.add(test_enemy)
-
-# Bars
-health_bar = Bars("health", 60)
-boost_bar = Bars("boost", 100)
-group_of_bars = pygame.sprite.Group()
-group_of_bars.add(health_bar, boost_bar)
-
-
 bg_image = pygame.image.load("menu.jpg")
 bg_image = pygame.transform.scale(bg_image, [W, H])
+you_died = pygame.image.load("end.jpg")
+you_died = pygame.transform.scale(you_died, (W, H))
 screen.blit(bg_image, (0, 0, W, H))
 ng_active = pygame.image.load("ng_active.png")
 ng = pygame.image.load("ng.png")
 
 
-def show_menu(event):
+def show_menu(event, main_map, list_of_items, list_of_enemies, worm, group_of_enemies, list_of_segments):
+    screen.blit(bg_image, (0, 0))
     if event.type == pygame.MOUSEMOTION:
         if 450 <= event.pos[1] <= 600 and 410 <= event.pos[0] <= 610:
             screen.blit(ng_active, (410, 450))
@@ -470,13 +447,57 @@ def show_menu(event):
             screen.blit(ng, (410, 450))
     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and \
             450 <= event.pos[1] <= 600 and 410 <= event.pos[0] <= 610:
-        main_map.generate(200, 50)
+        main_map.generate(200, 50, main_map, list_of_items, list_of_segments, worm, group_of_enemies, list_of_enemies)
         return True
+
+
+def end_game():
+    screen.blit(you_died, (0, 0))
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.display.quit()
+            pygame.quit()
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                game()
 
 
 def game():
     game_over = False  # Закончена ли игра
     game_started = False
+
+    # new list of segments
+    group_of_segments = pygame.sprite.Group()
+    list_of_segments = [Segment(W / 2, H / 2), Segment(W / 2 - 9, H / 2 - 9)]  # Первые 2 сегмента
+    group_of_segments.add(list_of_segments[0], list_of_segments[1])
+    for i in range(2, 20):
+        segment_x = 2 * list_of_segments[i - 1].x - list_of_segments[i - 2].x
+        segment_y = 2 * list_of_segments[i - 1].y - list_of_segments[i - 2].y
+        list_of_segments.append(Segment(segment_x, segment_y))
+        group_of_segments.add(list_of_segments[i])
+
+    # Map
+    main_map = Map(4 * 1024, 4 * 1024, list_of_segments)
+
+    used_area = [(0, 0)]
+
+    worm = Worm(group_of_segments, list_of_segments)
+
+    # list of items and the
+    list_of_items = pygame.sprite.Group()
+
+    # list of enemies
+    test_enemy = Enemy(900, 500, worm)
+    list_of_enemies = [test_enemy]
+    group_of_enemies = pygame.sprite.Group()
+    group_of_enemies.add(test_enemy)
+
+    # Bars
+    health_bar = Bars("health", 60)
+    boost_bar = Bars("boost", 100)
+    group_of_bars = pygame.sprite.Group()
+    group_of_bars.add(health_bar, boost_bar)
 
     while not game_over:
         clock.tick(FPS)
@@ -489,32 +510,41 @@ def game():
             # Draw all the objects, update
             main_map.update_bg()
             # Draw items
-            draw_trace(used_area)
+            draw_trace(used_area, worm)
             for item in list_of_items:
-                if item.eat_check():
+                if item.eat_check(worm, group_of_segments):
                     list_of_items.remove(item)
-            list_of_items.update()
+            list_of_items.update(list_of_segments)
             list_of_items.draw(screen)
             for enemy in list_of_enemies:
-                enemy.move()
-                enemy.animate()
+                enemy.move(worm)
+                enemy.animate(worm)
             group_of_enemies.draw(screen)
             group_of_enemies.update()
-            worm.update()
+            worm.update(group_of_segments)
+            game_over = worm.check_dead()
             group_of_segments.draw(screen)
 
-            group_of_bars.update()
+            group_of_bars.update(worm)
             group_of_bars.draw(screen)
 
             if pygame.mouse.get_pressed()[0]:
-                worm.move(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
+                worm.move(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1], main_map, list_of_segments, worm)
+            if game_over:
+                screen.blit(you_died, (0, 0))
+        if not game_over:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    game_over = True
+                    pygame.display.quit()
+                    pygame.quit()
 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                game_over = True
-
-            if not game_started:
-                game_started = show_menu(event)
+                if not game_started:
+                    game_started = show_menu(event, main_map, list_of_items, list_of_enemies, worm, group_of_enemies,
+                                             list_of_segments)
+    while True:
+        pygame.display.flip()
+        end_game()
 
 
 game()
