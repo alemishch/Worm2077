@@ -252,10 +252,12 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = pygame.Rect(x, y, 50, 50)
         self.rect.topleft = [x, y]
         self.image = self.full_image.subsurface((100, 100), (50, 50))
-        self.zone = pygame.image.load("new_cave.png").convert_alpha()
+        self.zone = pygame.image.load("RockBG1.png").convert_alpha()
         self.zone = pygame.transform.scale(self.zone, (200, 60))
         self.type = choice(['Bug', 'Ant', 'Bird'])
         self.damage = 0.1
+        self.cool_down = 0.5
+        self.last_attack = 0
 
     def move(self):
         self.rect.topleft = get_screen_cords(worm.head, int(self.x_lab), int(self.y_lab))
@@ -331,8 +333,16 @@ class Enemy(pygame.sprite.Sprite):
         dist = get_distance(player.tail.x_lab, player.tail.y_lab, self.x_lab + 25, self.y_lab + 25)
         if get_distance(player.head.x_lab, player.head.y_lab, self.x_lab + 25, self.y_lab + 25) <= 20:
             self.alive = False
-        if get_distance(player.tail.x_lab, player.tail.y_lab, self.x_lab + 25, self.y_lab + 25) <= 3:
-            player.health -= self.damage
+        for seg in player.list_of_segments:
+            if player.list_of_segments.index(seg) and time.time() > self.last_attack + self.cool_down \
+                    and get_distance(seg.x_lab, seg.y_lab, self.x_lab + 25, self.y_lab + 25) <= 2:
+                if player.health > self.damage:
+                    player.health -= self.damage
+                else:
+                    player.health = 0
+                self.last_attack = time.time()
+
+                break
         if dist <= 200:
             self.is_not_attacking = False
             dx = self.x_lab - player.tail.x_lab + 25
@@ -368,6 +378,10 @@ class Item(pygame.sprite.Sprite):
         if self.x_lab - 20 < self.head.x_lab < self.x_lab + 20 and self.y_lab - 20 < self.head.y_lab < self.y_lab + 20:
             if self.type == "seed":
                 worm.new_segment()
+                if worm.health < 0.98:
+                    worm.health += 0.02
+                else:
+                     worm.health = 1
             elif self.type == "berry":
                 worm.boost()
             return 1
@@ -467,6 +481,10 @@ def game():
     while not game_over:
         clock.tick(FPS)
         pygame.display.flip()
+        if worm.health > 0.0005:
+            worm.health -= 0.0005
+        else:
+            worm.health = 0
         if game_started:
             # Draw all the objects, update
             main_map.update_bg()
