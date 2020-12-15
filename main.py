@@ -47,74 +47,63 @@ class Bars(pygame.sprite.Sprite):
 
 
 class Map:
-    def __init__(self):
+    def __init__(self, width, height):
         self.head = list_of_segments[0]  # Worm head
         self.background = pygame.image.load("bg.png")
         self.rock_bg = pygame.image.load("rock.png")
         self.grass_bg = pygame.image.load("grass.png")
+        self.width = width
+        self.height = height
+        self.bg_width = self.background.get_rect().width
+        self.bg_height = self.background.get_rect().height
 
     def update_bg(self):
         # Moving background
-        rel_x = W - self.head.x_lab % self.background.get_rect().width
-        rel_y = H - self.head.y_lab % self.background.get_rect().height
-        screen.blit(self.background, (rel_x - self.background.get_rect().width,
-                                      rel_y - self.background.get_rect().height))
+        rel_x = W - self.head.x_lab % self.bg_width
+        rel_y = H - self.head.y_lab % self.bg_height
+        screen.blit(self.background, (rel_x - self.bg_width,
+                                      rel_y - self.bg_height))
         if rel_x < W:
-            if self.head.x_lab > W:
-                screen.blit(self.rock_bg, (rel_x, rel_y - self.background.get_rect().height))
+            if self.head.x_lab > self.width/2 - self.bg_width:
+                screen.blit(self.rock_bg, (rel_x, rel_y - self.bg_height))
             else:
-                screen.blit(self.background, (rel_x, rel_y - self.background.get_rect().height))
+                screen.blit(self.background, (rel_x, rel_y - self.bg_height))
         if rel_y < H:
-            if self.head.y_lab > H and rel_y > 0:
-                screen.blit(self.rock_bg, (rel_x - self.background.get_rect().width, rel_y))
+            if self.head.y_lab > self.height/2 - self.bg_height and rel_y > 0:
+                screen.blit(self.rock_bg, (rel_x - self.bg_width, rel_y))
             else:
-                screen.blit(self.background, (rel_x - self.background.get_rect().width, rel_y))
+                screen.blit(self.background, (rel_x - self.bg_width, rel_y))
         if rel_x < W and rel_y < H:
-            if self.head.x_lab > W or (self.head.y_lab > H and rel_y > 0):
+            if self.head.x_lab > self.width/2 - self.bg_width or \
+                    (self.head.y_lab > self.height/2 - self.bg_height and rel_y > 0):
                 screen.blit(self.rock_bg, (rel_x, rel_y))
             else:
                 screen.blit(self.background, (rel_x, rel_y))
 
         # additional bg
-        if self.head.x_lab < -W or self.head.y_lab < -H:
-            rel_x = W - (-self.head.x_lab) % self.background.get_rect().width
-            rel_y = H - (-self.head.y_lab) % self.background.get_rect().height
+        if self.head.x_lab < - self.width/2 + self.bg_width or self.head.y_lab < - self.height/2 + self.bg_height:
+            rel_x = W - (-self.head.x_lab) % self.bg_width
+            rel_y = H - (-self.head.y_lab) % self.bg_height
             if rel_x < W:
-                if self.head.x_lab < -W:
+                if self.head.x_lab < - self.width/2 + self.bg_width:
                     screen.blit(self.rock_bg, (-rel_x, H - rel_y))
-                    screen.blit(self.rock_bg, (-rel_x, H - self.background.get_rect().height - rel_y))
+                    screen.blit(self.rock_bg, (-rel_x, H - self.bg_height - rel_y))
             if rel_y < H:
-                if self.head.y_lab < -H and rel_y > 0:
-                    screen.blit(self.grass_bg, (self.background.get_rect().width - rel_x,
-                                                H - self.background.get_rect().height - rel_y))
+                if self.head.y_lab < - self.height/2 + self.bg_height and rel_y > 0:
+                    screen.blit(self.grass_bg, (self.bg_width - rel_x,
+                                                H - self.bg_height - rel_y))
                     if rel_x < W:
-                        screen.blit(self.grass_bg, (-rel_x, H - self.background.get_rect().height - rel_y))
+                        screen.blit(self.grass_bg, (-rel_x, H - self.bg_height - rel_y))
 
-    def generate(self):
-        if self.head.vx > 0:
-            left_edge = int(self.head.x_lab + W / 2)
-            right_edge = int(self.head.x_lab + W * 3 / 2)
-        else:
-            left_edge = int(self.head.x_lab - W * 3 / 2)
-            right_edge = int(self.head.x_lab - W / 2)
-
-        if self.head.vy > 0:
-            bottom_edge = int(self.head.y_lab + H / 2)
-            top_edge = int(self.head.y_lab + H * 3 / 2)
-        else:
-            bottom_edge = int(self.head.y_lab - H * 3 / 2)
-            top_edge = int(self.head.y_lab - H / 2)
-
-        new_item = Item(randint(left_edge, right_edge), randint(bottom_edge, top_edge),
-                        np.random.choice(["seed", "berry"], p=[0.9, 0.1]))
-        list_of_items.add(new_item)
-        new_item = Item(randint(int(self.head.x_lab - W / 2), int(self.head.x_lab + W / 2)),
-                        randint(bottom_edge, top_edge), np.random.choice(["seed", "berry"], p=[0.9, 0.1]))
-        list_of_items.add(new_item)
-        new_item = Item(randint(left_edge, right_edge),
-                        randint(int(self.head.y_lab - H / 2), int(self.head.y_lab + H / 2)),
-                        np.random.choice(["seed", "berry"], p=[0.9, 0.1]))
-        list_of_items.add(new_item)
+    @staticmethod
+    def generate(number_of_items):
+        for j in range(number_of_items):
+            new_item = Item(randint(-main_map.width/2 + main_map.bg_width - W/2,
+                                    main_map.width/2 - main_map.bg_width + W/2),
+                            randint(-main_map.height/2 + main_map.bg_height - H/2,
+                                    main_map.height/2 - main_map.bg_height + H/2),
+                            np.random.choice(["seed", "berry"], p=[0.9, 0.1]))
+            list_of_items.add(new_item)
 
 
 class Worm:
@@ -128,6 +117,7 @@ class Worm:
     def __init__(self, group, list_s):
         self.list_of_segments = list_s
         self.head = list_of_segments[0]
+        self.tail = list_of_segments[len(list_of_segments) - 1]
         self.group = group
         self.angle = 0
         self.boost_end = time.time()  # change
@@ -213,6 +203,13 @@ class Segment(pygame.sprite.Sprite):
         self.rect.center = [x, y]
 
     def move(self):
+        if not - main_map.width/2 + main_map.bg_width/2 < self.x_lab + self.vx \
+                < main_map.width/2 - main_map.bg_width/2 and self == worm.head:
+            self.vx = 0
+        if not - main_map.height/2 + main_map.bg_height - H/2 < self.y_lab + self.vy \
+                < main_map.height/2 - main_map.bg_height + H/2 and self == worm.head:
+            self.vy = 0
+
         # changing screen coordinates
         self.x += self.vx - list_of_segments[0].vx
         self.y += self.vy - list_of_segments[0].vy
@@ -239,7 +236,7 @@ class Enemy(pygame.sprite.Sprite):
         self.is_moving_left = False
         x = get_screen_cords(player.head, self.x_lab, self.y_lab)[0]
         y = get_screen_cords(player.head, self.x_lab, self.y_lab)[1]
-        self.v = 2
+        self.v = 3.1
         self.is_not_attacking = True
         self.full_image = pygame.image.load("beetle5.png").convert_alpha()
         self.full_image = pygame.transform.scale(self.full_image, (250, 200))
@@ -321,15 +318,15 @@ class Enemy(pygame.sprite.Sprite):
             screen.blit(self.zone, get_screen_cords(worm.head, self.zone_x, self.zone_y))
 
     def attack(self, player):
-        dist = get_distance(player.head.x_lab, player.head.y_lab, self.x_lab + 25, self.y_lab + 25)
+        dist = get_distance(player.tail.x_lab, player.tail.y_lab, self.x_lab + 25, self.y_lab + 25)
         for seg in player.list_of_segments:
             if player.list_of_segments.index(seg) and \
                     get_distance(seg.x_lab, seg.y_lab, self.x_lab + 25, self.y_lab + 25) <= 2:
                 self.alive = False
         if dist <= 200:
             self.is_not_attacking = False
-            dx = self.x_lab - player.head.x_lab + 25
-            dy = self.y_lab - player.head.y_lab + 25
+            dx = self.x_lab - player.tail.x_lab + 25
+            dy = self.y_lab - player.tail.y_lab + 25
             if dx <= 0:
                 self.animate_right()
             else:
@@ -412,7 +409,7 @@ for i in range(2, 20):
     group_of_segments.add(list_of_segments[i])
 
 # Map
-main_map = Map()
+main_map = Map(4*1024, 4*1024)
 
 used_area = [(0, 0)]
 
@@ -436,11 +433,10 @@ group_of_bars.add(health_bar, boost_bar)
 
 def game():
     game_over = False  # Закончена ли игра
-    frame_count = 0
+    main_map.generate(200)
 
     while not game_over:
         clock.tick(FPS)
-        frame_count += 1
 
         # Draw all the objects, update
         pygame.display.flip()
@@ -469,8 +465,6 @@ def game():
 
         if pygame.mouse.get_pressed()[0]:
             worm.move(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
-            if frame_count % 30 == 0:
-                main_map.generate()
 
 
 game()
