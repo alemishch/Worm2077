@@ -53,7 +53,6 @@ class Map:
         self.rock_bg = pygame.image.load("rock.png")
         self.grass_bg = pygame.image.load("grass.png")
 
-
     def update_bg(self):
         # Moving background
         rel_x = W - self.head.x_lab % self.background.get_rect().width
@@ -80,41 +79,40 @@ class Map:
         if self.head.x_lab < -W or self.head.y_lab < -H:
             rel_x = W - (-self.head.x_lab) % self.background.get_rect().width
             rel_y = H - (-self.head.y_lab) % self.background.get_rect().height
-            print(rel_x, rel_y)
             if rel_x < W:
                 if self.head.x_lab < -W:
                     screen.blit(self.rock_bg, (-rel_x, H - rel_y))
-                    screen.blit(self.rock_bg, (-rel_x,  H - self.background.get_rect().height - rel_y))
+                    screen.blit(self.rock_bg, (-rel_x, H - self.background.get_rect().height - rel_y))
             if rel_y < H:
                 if self.head.y_lab < -H and rel_y > 0:
                     screen.blit(self.grass_bg, (self.background.get_rect().width - rel_x,
                                                 H - self.background.get_rect().height - rel_y))
                     if rel_x < W:
-                        screen.blit(self.grass_bg, (-rel_x,  H - self.background.get_rect().height - rel_y))
+                        screen.blit(self.grass_bg, (-rel_x, H - self.background.get_rect().height - rel_y))
 
     def generate(self):
         if self.head.vx > 0:
-            left_edge = int(self.head.x_lab + W/2)
-            right_edge = int(self.head.x_lab + W*3/2)
+            left_edge = int(self.head.x_lab + W / 2)
+            right_edge = int(self.head.x_lab + W * 3 / 2)
         else:
-            left_edge = int(self.head.x_lab - W*3/2)
-            right_edge = int(self.head.x_lab - W/2)
+            left_edge = int(self.head.x_lab - W * 3 / 2)
+            right_edge = int(self.head.x_lab - W / 2)
 
         if self.head.vy > 0:
-            bottom_edge = int(self.head.y_lab + H/2)
-            top_edge = int(self.head.y_lab + H*3/2)
+            bottom_edge = int(self.head.y_lab + H / 2)
+            top_edge = int(self.head.y_lab + H * 3 / 2)
         else:
-            bottom_edge = int(self.head.y_lab - H*3/2)
-            top_edge = int(self.head.y_lab - H/2)
+            bottom_edge = int(self.head.y_lab - H * 3 / 2)
+            top_edge = int(self.head.y_lab - H / 2)
 
         new_item = Item(randint(left_edge, right_edge), randint(bottom_edge, top_edge),
                         np.random.choice(["seed", "berry"], p=[0.9, 0.1]))
         list_of_items.add(new_item)
-        new_item = Item(randint(int(self.head.x_lab - W/2), int(self.head.x_lab + W/2)),
+        new_item = Item(randint(int(self.head.x_lab - W / 2), int(self.head.x_lab + W / 2)),
                         randint(bottom_edge, top_edge), np.random.choice(["seed", "berry"], p=[0.9, 0.1]))
         list_of_items.add(new_item)
         new_item = Item(randint(left_edge, right_edge),
-                        randint(int(self.head.y_lab - H/2), int(self.head.y_lab + H/2)),
+                        randint(int(self.head.y_lab - H / 2), int(self.head.y_lab + H / 2)),
                         np.random.choice(["seed", "berry"], p=[0.9, 0.1]))
         list_of_items.add(new_item)
 
@@ -228,6 +226,7 @@ class Segment(pygame.sprite.Sprite):
 
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, x, y, player):
+        self.alive = True
         self.t = 0
         self.right = [0, 50, 100, 150, 200]
         self.left = [0, 50, 100, 150, 200]
@@ -238,25 +237,51 @@ class Enemy(pygame.sprite.Sprite):
         self.y_lab = y
         self.is_moving_right = True
         self.is_moving_left = False
-        self.x = get_screen_cords(player.head, self.x_lab, self.y_lab)[0]
-        self.y = get_screen_cords(player.head, self.x_lab, self.y_lab)[1]
-        self.v = 3
+        x = get_screen_cords(player.head, self.x_lab, self.y_lab)[0]
+        y = get_screen_cords(player.head, self.x_lab, self.y_lab)[1]
+        self.v = 2
+        self.is_not_attacking = True
         self.full_image = pygame.image.load("beetle5.png").convert_alpha()
         self.full_image = pygame.transform.scale(self.full_image, (250, 200))
-        self.rect = pygame.Rect(self.x, self.y, 50, 50)
-        self.rect.topleft = [self.x, self.y]
+        self.rect = pygame.Rect(x, y, 50, 50)
+        self.rect.topleft = [x, y]
         self.image = self.full_image.subsurface((100, 100), (50, 50))
         self.zone = pygame.image.load("RockBG.png")
         self.zone = pygame.transform.scale(self.zone, (200, 60))
         self.type = choice(['Bug', 'Ant', 'Bird'])
 
     def move(self):
-        self.rect.topleft = get_screen_cords(worm.head, self.x_lab, self.y_lab)
-        self.t += 1
+        self.rect.topleft = get_screen_cords(worm.head, int(self.x_lab), int(self.y_lab))
+        if self.alive:
+            self.t += 1
+            self.is_not_attacking = True
+            if not self.attack(worm) and (self.x_lab - self.zone_x >= 0 or self.x_lab - self.zone_x <= 200) and \
+                    self.y_lab == self.zone_y:
+                self.be_home()
+                self.is_not_attacking = True
+            elif (self.x_lab - self.zone_x < 0 or self.x_lab - self.zone_x > 150 or self.y_lab != self.zone_y) \
+                    and self.is_not_attacking:
+                self.go_home()
+        else:
+            self.image = self.full_image.subsurface(50, 150, 50, 50)
+            self.image = pygame.transform.rotate(self.image, 180)
 
+    def go_home(self):
+        self.is_moving_right = True
+        self.is_moving_left = False
+        dist = get_distance(self.x_lab, self.y_lab, self.zone_x + 75, self.zone_y)
+        dx = self.x_lab - 75 - self.zone_x
+        dy = self.y_lab - self.zone_y
+        self.x_lab -= self.v * dx / dist
+        self.y_lab -= self.v * dy / dist
+        if abs(self.x_lab - 75 - self.zone_x) <= 1 and abs(self.y_lab - self.zone_y) <= 1:
+            self.x_lab = self.zone_x + 75
+            self.y_lab = self.zone_y
+
+    def be_home(self):
         if self.x_lab <= self.zone_x + 150 and self.is_moving_right:
             self.x_lab += 1
-            num = int(self.t/5) % 5
+            num = int(self.t / 5) % 5
             x = self.right[num]
             self.image = self.full_image.subsurface((x, 100, 50, 50))
             if self.x_lab >= self.zone_x + 149:
@@ -286,10 +311,20 @@ class Enemy(pygame.sprite.Sprite):
             screen.blit(self.zone, get_screen_cords(worm.head, self.zone_x, self.zone_y))
 
     def attack(self, player):
-        pass
-
-    def update(self):
-        pass
+        dist = get_distance(player.head.x_lab, player.head.y_lab, self.x_lab + 25, self.y_lab + 25)
+        for seg in player.list_of_segments:
+            if player.list_of_segments.index(seg) and \
+                    get_distance(seg.x_lab, seg.y_lab, self.x_lab + 25, self.y_lab + 25) <= 2:
+                self.alive = False
+        if dist <= 200:
+            self.is_not_attacking = False
+            dx = self.x_lab - player.head.x_lab + 25
+            dy = self.y_lab - player.head.y_lab + 25
+            self.x_lab -= self.v * dx / dist
+            self.y_lab -= self.v * dy / dist
+            if dist == 0:
+                return True
+        return False
 
 
 class Item(pygame.sprite.Sprite):
@@ -309,7 +344,7 @@ class Item(pygame.sprite.Sprite):
         self.rect.center = [self.x, self.y]
 
     def eat_check(self):
-        if self.x_lab-20 < self.head.x_lab < self.x_lab+20 and self.y_lab-20 < self.head.y_lab < self.y_lab+20:
+        if self.x_lab - 20 < self.head.x_lab < self.x_lab + 20 and self.y_lab - 20 < self.head.y_lab < self.y_lab + 20:
             if self.type == "seed":
                 worm.new_segment()
             elif self.type == "berry":
@@ -361,8 +396,6 @@ for i in range(2, 20):
     segment_y = 2 * list_of_segments[i - 1].y - list_of_segments[i - 2].y
     list_of_segments.append(Segment(segment_x, segment_y))
     group_of_segments.add(list_of_segments[i])
-# test_segment = Segment(100, 100)
-# list_of_segments.add(test_segment)
 
 # Map
 main_map = Map()
@@ -372,13 +405,10 @@ used_area = [(0, 0)]
 worm = Worm(group_of_segments, list_of_segments)
 
 # list of items and the
-test_item = Item(500, 500, "berry")
-test_item_2 = Item(400, 400, "seed")
 list_of_items = pygame.sprite.Group()
-list_of_items.add(test_item, test_item_2)
 
 # list of enemies
-test_enemy = Enemy(500, 300, worm)
+test_enemy = Enemy(900, 500, worm)
 list_of_enemies = [test_enemy]
 group_of_enemies = pygame.sprite.Group()
 group_of_enemies.add(test_enemy)
