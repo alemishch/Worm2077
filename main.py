@@ -96,7 +96,7 @@ class Map:
                         screen.blit(self.grass_bg, (-rel_x, H - self.bg_height - rel_y))
 
     @staticmethod
-    def generate(number_of_items):
+    def generate(number_of_items, number_of_enemies):
         for j in range(number_of_items):
             new_item = Item(randint(-main_map.width/2 + main_map.bg_width - W/2,
                                     main_map.width/2 - main_map.bg_width + W/2),
@@ -104,6 +104,14 @@ class Map:
                                     main_map.height/2 - main_map.bg_height + H/2),
                             np.random.choice(["seed", "berry"], p=[0.9, 0.1]))
             list_of_items.add(new_item)
+        for k in range(number_of_enemies):
+            new_enemy = Enemy(randint(-main_map.width/2 + main_map.bg_width - W/2,
+                                      main_map.width/2 - main_map.bg_width + W/2),
+                              randint(-main_map.height/2 + main_map.bg_height - H/2,
+                                      main_map.height/2 - main_map.bg_height + H/2),
+                              worm)
+            list_of_enemies.append(new_enemy)
+            group_of_enemies.add(new_enemy)
 
 
 class Worm:
@@ -244,7 +252,7 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = pygame.Rect(x, y, 50, 50)
         self.rect.topleft = [x, y]
         self.image = self.full_image.subsurface((100, 100), (50, 50))
-        self.zone = pygame.image.load("RockBG1.png")
+        self.zone = pygame.image.load("new_cave.png").convert_alpha()
         self.zone = pygame.transform.scale(self.zone, (200, 60))
         self.type = choice(['Bug', 'Ant', 'Bird'])
         self.damage = 0.1
@@ -448,7 +456,7 @@ def show_menu(event):
             screen.blit(ng, (410, 450))
     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and \
             450 <= event.pos[1] <= 600 and 410 <= event.pos[0] <= 610:
-        main_map.generate(200)
+        main_map.generate(200, 50)
         return True
 
 
