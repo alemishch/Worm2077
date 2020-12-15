@@ -229,22 +229,22 @@ class Enemy(pygame.sprite.Sprite):
         self.left = [0, 50, 100, 150, 200]
         super().__init__()
         self.zone_x = x
-        self.zone_y = y
+        self.zone_y = y - 50
         self.x_lab = x
         self.y_lab = y
         self.is_moving_right = True
         self.is_moving_left = False
         x = get_screen_cords(player.head, self.x_lab, self.y_lab)[0]
         y = get_screen_cords(player.head, self.x_lab, self.y_lab)[1]
-        self.v = 3.1
+        self.v = 2.5
         self.is_not_attacking = True
         self.full_image = pygame.image.load("beetle5.png").convert_alpha()
         self.full_image = pygame.transform.scale(self.full_image, (250, 200))
         self.rect = pygame.Rect(x, y, 50, 50)
         self.rect.topleft = [x, y]
         self.image = self.full_image.subsurface((100, 100), (50, 50))
-        self.zone = pygame.image.load("RockBG.png")
-        self.zone = pygame.transform.scale(self.zone, (200, 60))
+        self.zone = pygame.image.load("cave.png")
+        # self.zone = pygame.transform.scale(self.zone, (200, 60))
         self.type = choice(['Bug', 'Ant', 'Bird'])
 
     def move(self):
@@ -319,10 +319,8 @@ class Enemy(pygame.sprite.Sprite):
 
     def attack(self, player):
         dist = get_distance(player.tail.x_lab, player.tail.y_lab, self.x_lab + 25, self.y_lab + 25)
-        for seg in player.list_of_segments:
-            if player.list_of_segments.index(seg) and \
-                    get_distance(seg.x_lab, seg.y_lab, self.x_lab + 25, self.y_lab + 25) <= 2:
-                self.alive = False
+        if get_distance(player.head.x_lab, player.head.y_lab, self.x_lab + 25, self.y_lab + 25) <= 20:
+            self.alive = False
         if dist <= 200:
             self.is_not_attacking = False
             dx = self.x_lab - player.tail.x_lab + 25
@@ -364,7 +362,7 @@ class Item(pygame.sprite.Sprite):
         else:
             return 0
 
-    # update the item, will change later
+    # update the item
     def update(self):
         [self.x, self.y] = get_screen_cords(list_of_segments[0], self.x_lab, self.y_lab)
         self.rect.center = self.x, self.y
