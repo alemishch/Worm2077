@@ -244,7 +244,7 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = pygame.Rect(x, y, 50, 50)
         self.rect.topleft = [x, y]
         self.image = self.full_image.subsurface((100, 100), (50, 50))
-        self.zone = pygame.image.load("RockBG.png")
+        self.zone = pygame.image.load("RockBG1.png")
         self.zone = pygame.transform.scale(self.zone, (200, 60))
         self.type = choice(['Bug', 'Ant', 'Bird'])
         self.damage = 0.1
