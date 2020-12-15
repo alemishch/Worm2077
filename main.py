@@ -241,6 +241,7 @@ class Enemy(pygame.sprite.Sprite):
         self.zone_y = y
         self.x_lab = x
         self.y_lab = y
+        [self.x, self.y] = get_screen_cords(list_of_segments[0], self.x_lab, self.y_lab)
         self.is_moving_right = True
         self.is_moving_left = False
         x = get_screen_cords(player.head, self.x_lab, self.y_lab)[0]
@@ -357,6 +358,9 @@ class Enemy(pygame.sprite.Sprite):
                 return True
         return False
 
+    def update(self):
+        [self.x, self.y] = get_screen_cords(list_of_segments[0], self.x_lab, self.y_lab)
+
 
 class Item(pygame.sprite.Sprite):
     def __init__(self, x_lab, y_lab, item_type):
@@ -433,7 +437,7 @@ for i in range(2, 20):
     group_of_segments.add(list_of_segments[i])
 
 # Map
-main_map = Map(4*1024, 4*1024)
+main_map = Map(8*1024, 8*1024)
 
 used_area = [(0, 0)]
 
@@ -470,7 +474,7 @@ def show_menu(event):
             screen.blit(ng, (410, 450))
     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and \
             450 <= event.pos[1] <= 600 and 410 <= event.pos[0] <= 610:
-        main_map.generate(200, 50)
+        main_map.generate(1000, 200)
         return True
 
 
@@ -478,9 +482,22 @@ def game():
     game_over = False  # Закончена ли игра
     game_started = False
 
+    active_enemies = pygame.sprite.Group()
+
     while not game_over:
         clock.tick(FPS)
         pygame.display.flip()
+
+        active_items = pygame.sprite.Group()
+        for item in list_of_items:
+            if -100 < item.x < W+100 and -100 < item.y < H+100:
+                active_items.add(item)
+
+        active_enemies.empty()
+        for enemy in group_of_enemies:
+            if -200 < enemy.x < W+300 and -100 < enemy.y < H+100:
+                active_enemies.add(enemy)
+
         if worm.health > 0.0005:
             worm.health -= 0.0005
         else:
@@ -490,15 +507,15 @@ def game():
             main_map.update_bg()
             # Draw items
             draw_trace(used_area)
-            for item in list_of_items:
+            for item in active_items:
                 if item.eat_check():
                     list_of_items.remove(item)
             list_of_items.update()
-            list_of_items.draw(screen)
-            for enemy in list_of_enemies:
+            active_items.draw(screen)
+            for enemy in active_enemies:
                 enemy.move()
                 enemy.animate()
-            group_of_enemies.draw(screen)
+            active_enemies.draw(screen)
             group_of_enemies.update()
             worm.update()
             group_of_segments.draw(screen)
