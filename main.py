@@ -110,7 +110,7 @@ class Map:
                                       main_map.width / 2 - main_map.bg_width + W / 2),
                               randint(-main_map.height / 2 + main_map.bg_height - H / 2,
                                       main_map.height / 2 - main_map.bg_height + H / 2),
-                              worm)
+                              worm, group_of_enemies)
             list_of_enemies.append(new_enemy)
             group_of_enemies.add(new_enemy)
 
@@ -129,7 +129,7 @@ class Worm:
         self.tail = list_of_segments[len(list_of_segments) - 1]
         self.group = group
         self.angle = 0
-        self.health = 10
+        self.health = 1
         self.boost_end = time.time()  # change
         self.boost_time = 5
 
@@ -238,7 +238,7 @@ class Segment(pygame.sprite.Sprite):
 
 
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, x, y, player):
+    def __init__(self, x, y, player, list_of_enemies):
         self.alive = True
         self.t = 0
         self.right = [0, 50, 100, 150, 200]
@@ -250,8 +250,8 @@ class Enemy(pygame.sprite.Sprite):
         self.y_lab = y
         self.is_moving_right = True
         self.is_moving_left = False
-        x = get_screen_cords(player.head, self.x_lab, self.y_lab)[0]
-        y = get_screen_cords(player.head, self.x_lab, self.y_lab)[1]
+        self.x = get_screen_cords(player.head, self.x_lab, self.y_lab)[0]
+        self.y = get_screen_cords(player.head, self.x_lab, self.y_lab)[1]
         self.v = 2.5
         self.is_not_attacking = True
         self.full_image = pygame.image.load("beetle5.png").convert_alpha()
@@ -363,6 +363,10 @@ class Enemy(pygame.sprite.Sprite):
             if dist == 0:
                 return True
         return False
+
+    def update(self, player):
+        self.x = get_screen_cords(player.head, self.x_lab, self.y_lab)[0]
+        self.y = get_screen_cords(player.head, self.x_lab, self.y_lab)[1]
 
 
 class Item(pygame.sprite.Sprite):
@@ -488,10 +492,8 @@ def game():
     list_of_items = pygame.sprite.Group()
 
     # list of enemies
-    test_enemy = Enemy(900, 500, worm)
-    list_of_enemies = [test_enemy]
+    list_of_enemies = []
     group_of_enemies = pygame.sprite.Group()
-    group_of_enemies.add(test_enemy)
 
     # Bars
     health_bar = Bars("health", 60)
@@ -502,6 +504,19 @@ def game():
     while not game_over:
         clock.tick(FPS)
         pygame.display.flip()
+
+        active_items = pygame.sprite.Group()
+        for item in list_of_items:
+            if -100 < item.x < W+100 and -100 < item.y < H+100:
+                active_items.add(item)
+        print(len(active_items))
+
+        active_enemies = pygame.sprite.Group()
+        for enemy in list_of_enemies:
+            if -200 < enemy.x < W + 200 and -200 < enemy.y < H + 200:
+                active_enemies.add(enemy)
+        print(len(active_enemies))
+
         if worm.health > 0.0005:
             worm.health -= 0.0005
         else:
@@ -511,16 +526,16 @@ def game():
             main_map.update_bg()
             # Draw items
             draw_trace(used_area, worm)
-            for item in list_of_items:
+            for item in active_items:
                 if item.eat_check(worm, group_of_segments):
                     list_of_items.remove(item)
             list_of_items.update(list_of_segments)
-            list_of_items.draw(screen)
-            for enemy in list_of_enemies:
+            active_items.draw(screen)
+            for enemy in active_enemies:
                 enemy.move(worm)
                 enemy.animate(worm)
-            group_of_enemies.draw(screen)
-            group_of_enemies.update()
+            active_enemies.draw(screen)
+            group_of_enemies.update(worm)
             worm.update(group_of_segments)
             game_over = worm.check_dead()
             group_of_segments.draw(screen)
